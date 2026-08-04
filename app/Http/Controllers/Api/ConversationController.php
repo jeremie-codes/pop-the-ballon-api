@@ -16,8 +16,6 @@ use App\Services\ExpoNotificationService;
 use Illuminate\Http\Request;
 use App\Events\ConversationSeen;
 use App\Enums\MessageType;
-use App\Jobs\SendMessageNotification;
-use Illuminate\Support\Facades\Storage;
 
 class ConversationController extends Controller
 {
@@ -57,11 +55,35 @@ class ConversationController extends Controller
 
         return response()->json(
             Conversation::query()
-                ->with(['userOne.photos', 'userTwo.photos', 'messages' => fn($query) => $query->latest()->limit(1)])
-                ->where('user_one_id', $user->id)
-                ->orWhere('user_two_id', $user->id)
+                ->with([
+                    'userOne.photos',
+                    'userTwo.photos',
+                    'messages' => fn($query) => $query->latest()->limit(1),
+                ])
+                ->where(function ($query) use ($user) {
+                    $query->where('user_one_id', $user->id)
+                        ->orWhere('user_two_id', $user->id);
+                })
                 ->latest('last_message_at')
                 ->get()
+                ->filter(function (Conversation $conversation) use ($user) {
+
+                    $otherUser = $conversation->user_one_id == $user->id
+                        ? $conversation->userTwo
+                        : $conversation->userOne;
+
+                    // Conversation normale
+                    if (!$otherUser->is_staff) {
+                        return true;
+                    }
+
+                    // Conversation support :
+                    // on l'affiche uniquement si le support a déjà répondu
+                    return $conversation->messages()
+                        ->where('sender_id', $otherUser->id)
+                        ->exists();
+                })
+                ->values()
                 ->map(fn(Conversation $conversation) => $this->conversationPayload($conversation, $user))
         );
     }
@@ -124,7 +146,6 @@ class ConversationController extends Controller
                     'type' => MessageType::TEXT,
                     'body' => $data['body'],
                 ]);
-
             } else {
 
                 if (!$request->hasFile('voice')) {
@@ -255,7 +276,7 @@ class ConversationController extends Controller
                 conversationId: $conversation->id,
                 readerId: $user->id,
                 messageIds: $messageIds
-                    ->map(fn ($id) => (string) $id)
+                    ->map(fn($id) => (string) $id)
                     ->values()
                     ->all(),
             );
@@ -275,7 +296,7 @@ class ConversationController extends Controller
             return response()->json([
                 'success' => true,
                 'message_ids' => $messageIds
-                    ->map(fn ($id) => (string) $id)
+                    ->map(fn($id) => (string) $id)
                     ->values(),
             ]);
         } catch (\Throwable $e) {
@@ -295,14 +316,26 @@ class ConversationController extends Controller
         Conversation $conversation,
         User $viewer,
         bool $withMessages = false
-    ): array {
+    ): array { 
+
         $other = $conversation->user_one_id === $viewer->id
             ? $conversation->userTwo
             : $conversation->userOne;
 
-        $last = $conversation->messages
-            ->sortByDesc('created_at')
-            ->first();
+        $other = $conversation->user_one_id === $viewer->id
+            ? $conversation->userTwo
+            : $conversation->userOne;
+
+        if ($viewer->is_staff !== $other->is_staff) {
+            $last = $conversation->messages()
+                ->where('sender_id', $other->id)
+                ->latest()
+                ->first();
+        } else {
+            $last = $conversation->messages()
+                ->latest()
+                ->first();
+        }
 
         $unread = $conversation->messages
             ->filter(
@@ -337,9 +370,9 @@ class ConversationController extends Controller
             'time' => optional($last?->created_at ?? $conversation->created_at)->toISOString(),
             'unread' => $unread,
             'read' => $read,
-            'lastMessageAt' => optional($conversation->last_message_at)->toDateTimeString(),
+            'lastMessageAt' => optional($last?->created_at ?? $conversation->last_message_at)->toDateTimeString(),
             'matched' => true,
-            'senderId' => $last? (string) $last->sender_id: null,
+            'senderId' => $last ? (string) $last->sender_id : null,
         ];
 
         if ($withMessages) {
@@ -376,6 +409,7 @@ class ConversationController extends Controller
             'distance' => '0 km',
             'pictures' => $profile->photos->map(fn(ProfilePhoto $photo) => ['name' => $photo->path])->values(),
             'avatar' => optional($profile->photos->first())->path ?? null,
+            'lastSeen' => optional($profile->last_seen_at)->toDateTimeString(),
             'interests' => $profile->interests->pluck('name')->values(),
         ];
     }

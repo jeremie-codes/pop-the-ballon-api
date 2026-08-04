@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\DiscoverFeedResource;
+use App\Models\MessageCredit;
 use App\Services\DiscoverFeedService;
 
 class ProfileController extends Controller
@@ -291,6 +292,8 @@ class ProfileController extends Controller
             'avatar' => optional($user->photos->first())->path ?? null,
             'pictures' => $user->photos->map(fn($photo) => ['id' => (string) $photo->id, 'name' => $photo->path])->values(),
             'age' => $user->age(),
+            'verified' => (bool) $user->verified,
+            'messageCredits' => MessageCredit::query()->where('user_id', $user->id)->get()->sum('available_messages'),
             'interests' => $user->interests->pluck('name')->values(),
         ];
     }

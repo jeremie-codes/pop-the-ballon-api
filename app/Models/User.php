@@ -105,6 +105,7 @@ class User extends Authenticatable implements FilamentUser, HasName
             'verified' => 'boolean',
             'last_seen_at' => 'datetime',
             'password' => 'hashed',
+            'password_reset_otp_expires_at' => 'datetime',
         ];
     }
 

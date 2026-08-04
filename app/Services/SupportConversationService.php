@@ -38,7 +38,16 @@ class SupportConversationService
 
         $support = $this->getSupportUser();
 
+        $hasSupportMessage = $conversation->messages()
+            ->where('sender_id', $support->id)
+            ->exists();
+
+        if (! $hasSupportMessage) {
+            return [];
+        }
+
         $lastMessage = $conversation->messages()->latest()->first();
+
 
         return [
             'id' => (string) $conversation->id,
