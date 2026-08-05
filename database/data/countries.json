@@ -1,0 +1,656 @@
+[
+    {
+        "name": "Algérie",
+        "iso": "DZ",
+        "phone_code": "+213",
+        "flag": "https://flagsapi.com/DZ/flat/64.png"
+    },
+    {
+        "name": "Angola",
+        "iso": "AO",
+        "phone_code": "+244",
+        "flag": "https://flagsapi.com/AO/flat/64.png"
+    },
+    {
+        "name": "Bénin",
+        "iso": "BJ",
+        "phone_code": "+229",
+        "flag": "https://flagsapi.com/BJ/flat/64.png"
+    },
+    {
+        "name": "Botswana",
+        "iso": "BW",
+        "phone_code": "+267",
+        "flag": "https://flagsapi.com/BW/flat/64.png"
+    },
+    {
+        "name": "Burkina Faso",
+        "iso": "BF",
+        "phone_code": "+226",
+        "flag": "https://flagsapi.com/BF/flat/64.png"
+    },
+    {
+        "name": "Burundi",
+        "iso": "BI",
+        "phone_code": "+257",
+        "flag": "https://flagsapi.com/BI/flat/64.png"
+    },
+    {
+        "name": "Cameroun",
+        "iso": "CM",
+        "phone_code": "+237",
+        "flag": "https://flagsapi.com/CM/flat/64.png"
+    },
+    {
+        "name": "Cap-Vert",
+        "iso": "CV",
+        "phone_code": "+238",
+        "flag": "https://flagsapi.com/CV/flat/64.png"
+    },
+    {
+        "name": "République centrafricaine",
+        "iso": "CF",
+        "phone_code": "+236",
+        "flag": "https://flagsapi.com/CF/flat/64.png"
+    },
+    {
+        "name": "Tchad",
+        "iso": "TD",
+        "phone_code": "+235",
+        "flag": "https://flagsapi.com/TD/flat/64.png"
+    },
+    {
+        "name": "Comores",
+        "iso": "KM",
+        "phone_code": "+269",
+        "flag": "https://flagsapi.com/KM/flat/64.png"
+    },
+    {
+        "name": "Congo",
+        "iso": "CG",
+        "phone_code": "+242",
+        "flag": "https://flagsapi.com/CG/flat/64.png"
+    },
+    {
+        "name": "République démocratique du Congo",
+        "iso": "CD",
+        "phone_code": "+243",
+        "flag": "https://flagsapi.com/CD/flat/64.png"
+    },
+    {
+        "name": "Côte d'Ivoire",
+        "iso": "CI",
+        "phone_code": "+225",
+        "flag": "https://flagsapi.com/CI/flat/64.png"
+    },
+    {
+        "name": "Djibouti",
+        "iso": "DJ",
+        "phone_code": "+253",
+        "flag": "https://flagsapi.com/DJ/flat/64.png"
+    },
+    {
+        "name": "Égypte",
+        "iso": "EG",
+        "phone_code": "+20",
+        "flag": "https://flagsapi.com/EG/flat/64.png"
+    },
+    {
+        "name": "Guinée équatoriale",
+        "iso": "GQ",
+        "phone_code": "+240",
+        "flag": "https://flagsapi.com/GQ/flat/64.png"
+    },
+    {
+        "name": "Érythrée",
+        "iso": "ER",
+        "phone_code": "+291",
+        "flag": "https://flagsapi.com/ER/flat/64.png"
+    },
+    {
+        "name": "Eswatini",
+        "iso": "SZ",
+        "phone_code": "+268",
+        "flag": "https://flagsapi.com/SZ/flat/64.png"
+    },
+    {
+        "name": "Éthiopie",
+        "iso": "ET",
+        "phone_code": "+251",
+        "flag": "https://flagsapi.com/ET/flat/64.png"
+    },
+    {
+        "name": "Gabon",
+        "iso": "GA",
+        "phone_code": "+241",
+        "flag": "https://flagsapi.com/GA/flat/64.png"
+    },
+    {
+        "name": "Gambie",
+        "iso": "GM",
+        "phone_code": "+220",
+        "flag": "https://flagsapi.com/GM/flat/64.png"
+    },
+    {
+        "name": "Ghana",
+        "iso": "GH",
+        "phone_code": "+233",
+        "flag": "https://flagsapi.com/GH/flat/64.png"
+    },
+    {
+        "name": "Guinée",
+        "iso": "GN",
+        "phone_code": "+224",
+        "flag": "https://flagsapi.com/GN/flat/64.png"
+    },
+    {
+        "name": "Guinée-Bissau",
+        "iso": "GW",
+        "phone_code": "+245",
+        "flag": "https://flagsapi.com/GW/flat/64.png"
+    },
+    {
+        "name": "Kenya",
+        "iso": "KE",
+        "phone_code": "+254",
+        "flag": "https://flagsapi.com/KE/flat/64.png"
+    },
+    {
+        "name": "Lesotho",
+        "iso": "LS",
+        "phone_code": "+266",
+        "flag": "https://flagsapi.com/LS/flat/64.png"
+    },
+    {
+        "name": "Liberia",
+        "iso": "LR",
+        "phone_code": "+231",
+        "flag": "https://flagsapi.com/LR/flat/64.png"
+    },
+    {
+        "name": "Libye",
+        "iso": "LY",
+        "phone_code": "+218",
+        "flag": "https://flagsapi.com/LY/flat/64.png"
+    },
+    {
+        "name": "Madagascar",
+        "iso": "MG",
+        "phone_code": "+261",
+        "flag": "https://flagsapi.com/MG/flat/64.png"
+    },
+    {
+        "name": "Malawi",
+        "iso": "MW",
+        "phone_code": "+265",
+        "flag": "https://flagsapi.com/MW/flat/64.png"
+    },
+    {
+        "name": "Mali",
+        "iso": "ML",
+        "phone_code": "+223",
+        "flag": "https://flagsapi.com/ML/flat/64.png"
+    },
+    {
+        "name": "Maroc",
+        "iso": "MA",
+        "phone_code": "+212",
+        "flag": "https://flagsapi.com/MA/flat/64.png"
+    },
+    {
+        "name": "Maurice",
+        "iso": "MU",
+        "phone_code": "+230",
+        "flag": "https://flagsapi.com/MU/flat/64.png"
+    },
+    {
+        "name": "Mauritanie",
+        "iso": "MR",
+        "phone_code": "+222",
+        "flag": "https://flagsapi.com/MR/flat/64.png"
+    },
+    {
+        "name": "Mozambique",
+        "iso": "MZ",
+        "phone_code": "+258",
+        "flag": "https://flagsapi.com/MZ/flat/64.png"
+    },
+    {
+        "name": "Namibie",
+        "iso": "NA",
+        "phone_code": "+264",
+        "flag": "https://flagsapi.com/NA/flat/64.png"
+    },
+    {
+        "name": "Niger",
+        "iso": "NE",
+        "phone_code": "+227",
+        "flag": "https://flagsapi.com/NE/flat/64.png"
+    },
+    {
+        "name": "Nigeria",
+        "iso": "NG",
+        "phone_code": "+234",
+        "flag": "https://flagsapi.com/NG/flat/64.png"
+    },
+    {
+        "name": "Ouganda",
+        "iso": "UG",
+        "phone_code": "+256",
+        "flag": "https://flagsapi.com/UG/flat/64.png"
+    },
+    {
+        "name": "Rwanda",
+        "iso": "RW",
+        "phone_code": "+250",
+        "flag": "https://flagsapi.com/RW/flat/64.png"
+    },
+    {
+        "name": "Sao Tomé-et-Principe",
+        "iso": "ST",
+        "phone_code": "+239",
+        "flag": "https://flagsapi.com/ST/flat/64.png"
+    },
+    {
+        "name": "Sénégal",
+        "iso": "SN",
+        "phone_code": "+221",
+        "flag": "https://flagsapi.com/SN/flat/64.png"
+    },
+    {
+        "name": "Seychelles",
+        "iso": "SC",
+        "phone_code": "+248",
+        "flag": "https://flagsapi.com/SC/flat/64.png"
+    },
+    {
+        "name": "Sierra Leone",
+        "iso": "SL",
+        "phone_code": "+232",
+        "flag": "https://flagsapi.com/SL/flat/64.png"
+    },
+    {
+        "name": "Somalie",
+        "iso": "SO",
+        "phone_code": "+252",
+        "flag": "https://flagsapi.com/SO/flat/64.png"
+    },
+    {
+        "name": "Soudan",
+        "iso": "SD",
+        "phone_code": "+249",
+        "flag": "https://flagsapi.com/SD/flat/64.png"
+    },
+    {
+        "name": "Soudan du Sud",
+        "iso": "SS",
+        "phone_code": "+211",
+        "flag": "https://flagsapi.com/SS/flat/64.png"
+    },
+    {
+        "name": "Tanzanie",
+        "iso": "TZ",
+        "phone_code": "+255",
+        "flag": "https://flagsapi.com/TZ/flat/64.png"
+    },
+    {
+        "name": "Togo",
+        "iso": "TG",
+        "phone_code": "+228",
+        "flag": "https://flagsapi.com/TG/flat/64.png"
+    },
+    {
+        "name": "Tunisie",
+        "iso": "TN",
+        "phone_code": "+216",
+        "flag": "https://flagsapi.com/TN/flat/64.png"
+    },
+    {
+        "name": "Zambie",
+        "iso": "ZM",
+        "phone_code": "+260",
+        "flag": "https://flagsapi.com/ZM/flat/64.png"
+    },
+    {
+        "name": "Zimbabwe",
+        "iso": "ZW",
+        "phone_code": "+263",
+        "flag": "https://flagsapi.com/ZW/flat/64.png"
+    },
+    {
+        "name": "Allemagne",
+        "iso": "DE",
+        "phone_code": "+49",
+        "flag": "https://flagsapi.com/DE/flat/64.png"
+    },
+    {
+        "name": "Autriche",
+        "iso": "AT",
+        "phone_code": "+43",
+        "flag": "https://flagsapi.com/AT/flat/64.png"
+    },
+    {
+        "name": "Belgique",
+        "iso": "BE",
+        "phone_code": "+32",
+        "flag": "https://flagsapi.com/BE/flat/64.png"
+    },
+    {
+        "name": "Danemark",
+        "iso": "DK",
+        "phone_code": "+45",
+        "flag": "https://flagsapi.com/DK/flat/64.png"
+    },
+    {
+        "name": "Espagne",
+        "iso": "ES",
+        "phone_code": "+34",
+        "flag": "https://flagsapi.com/ES/flat/64.png"
+    },
+    {
+        "name": "Finlande",
+        "iso": "FI",
+        "phone_code": "+358",
+        "flag": "https://flagsapi.com/FI/flat/64.png"
+    },
+    {
+        "name": "France",
+        "iso": "FR",
+        "phone_code": "+33",
+        "flag": "https://flagsapi.com/FR/flat/64.png"
+    },
+    {
+        "name": "Irlande",
+        "iso": "IE",
+        "phone_code": "+353",
+        "flag": "https://flagsapi.com/IE/flat/64.png"
+    },
+    {
+        "name": "Italie",
+        "iso": "IT",
+        "phone_code": "+39",
+        "flag": "https://flagsapi.com/IT/flat/64.png"
+    },
+    {
+        "name": "Luxembourg",
+        "iso": "LU",
+        "phone_code": "+352",
+        "flag": "https://flagsapi.com/LU/flat/64.png"
+    },
+    {
+        "name": "Norvège",
+        "iso": "NO",
+        "phone_code": "+47",
+        "flag": "https://flagsapi.com/NO/flat/64.png"
+    },
+    {
+        "name": "Pays-Bas",
+        "iso": "NL",
+        "phone_code": "+31",
+        "flag": "https://flagsapi.com/NL/flat/64.png"
+    },
+    {
+        "name": "Portugal",
+        "iso": "PT",
+        "phone_code": "+351",
+        "flag": "https://flagsapi.com/PT/flat/64.png"
+    },
+    {
+        "name": "Royaume-Uni",
+        "iso": "GB",
+        "phone_code": "+44",
+        "flag": "https://flagsapi.com/GB/flat/64.png"
+    },
+    {
+        "name": "Suède",
+        "iso": "SE",
+        "phone_code": "+46",
+        "flag": "https://flagsapi.com/SE/flat/64.png"
+    },
+    {
+        "name": "Suisse",
+        "iso": "CH",
+        "phone_code": "+41",
+        "flag": "https://flagsapi.com/CH/flat/64.png"
+    },
+    {
+        "name": "Argentine",
+        "iso": "AR",
+        "phone_code": "+54",
+        "flag": "https://flagsapi.com/AR/flat/64.png"
+    },
+    {
+        "name": "Brésil",
+        "iso": "BR",
+        "phone_code": "+55",
+        "flag": "https://flagsapi.com/BR/flat/64.png"
+    },
+    {
+        "name": "Canada",
+        "iso": "CA",
+        "phone_code": "+1",
+        "flag": "https://flagsapi.com/CA/flat/64.png"
+    },
+    {
+        "name": "Chili",
+        "iso": "CL",
+        "phone_code": "+56",
+        "flag": "https://flagsapi.com/CL/flat/64.png"
+    },
+    {
+        "name": "Colombie",
+        "iso": "CO",
+        "phone_code": "+57",
+        "flag": "https://flagsapi.com/CO/flat/64.png"
+    },
+    {
+        "name": "Costa Rica",
+        "iso": "CR",
+        "phone_code": "+506",
+        "flag": "https://flagsapi.com/CR/flat/64.png"
+    },
+    {
+        "name": "Cuba",
+        "iso": "CU",
+        "phone_code": "+53",
+        "flag": "https://flagsapi.com/CU/flat/64.png"
+    },
+    {
+        "name": "Équateur",
+        "iso": "EC",
+        "phone_code": "+593",
+        "flag": "https://flagsapi.com/EC/flat/64.png"
+    },
+    {
+        "name": "États-Unis",
+        "iso": "US",
+        "phone_code": "+1",
+        "flag": "https://flagsapi.com/US/flat/64.png"
+    },
+    {
+        "name": "Guatemala",
+        "iso": "GT",
+        "phone_code": "+502",
+        "flag": "https://flagsapi.com/GT/flat/64.png"
+    },
+    {
+        "name": "Jamaïque",
+        "iso": "JM",
+        "phone_code": "+1-876",
+        "flag": "https://flagsapi.com/JM/flat/64.png"
+    },
+    {
+        "name": "Mexique",
+        "iso": "MX",
+        "phone_code": "+52",
+        "flag": "https://flagsapi.com/MX/flat/64.png"
+    },
+    {
+        "name": "Panama",
+        "iso": "PA",
+        "phone_code": "+507",
+        "flag": "https://flagsapi.com/PA/flat/64.png"
+    },
+    {
+        "name": "Paraguay",
+        "iso": "PY",
+        "phone_code": "+595",
+        "flag": "https://flagsapi.com/PY/flat/64.png"
+    },
+    {
+        "name": "Pérou",
+        "iso": "PE",
+        "phone_code": "+51",
+        "flag": "https://flagsapi.com/PE/flat/64.png"
+    },
+    {
+        "name": "République dominicaine",
+        "iso": "DO",
+        "phone_code": "+1-809",
+        "flag": "https://flagsapi.com/DO/flat/64.png"
+    },
+    {
+        "name": "Uruguay",
+        "iso": "UY",
+        "phone_code": "+598",
+        "flag": "https://flagsapi.com/UY/flat/64.png"
+    },
+    {
+        "name": "Arabie saoudite",
+        "iso": "SA",
+        "phone_code": "+966",
+        "flag": "https://flagsapi.com/SA/flat/64.png"
+    },
+    {
+        "name": "Chine",
+        "iso": "CN",
+        "phone_code": "+86",
+        "flag": "https://flagsapi.com/CN/flat/64.png"
+    },
+    {
+        "name": "Corée du Sud",
+        "iso": "KR",
+        "phone_code": "+82",
+        "flag": "https://flagsapi.com/KR/flat/64.png"
+    },
+    {
+        "name": "Émirats arabes unis",
+        "iso": "AE",
+        "phone_code": "+971",
+        "flag": "https://flagsapi.com/AE/flat/64.png"
+    },
+    {
+        "name": "Hong Kong",
+        "iso": "HK",
+        "phone_code": "+852",
+        "flag": "https://flagsapi.com/HK/flat/64.png"
+    },
+    {
+        "name": "Inde",
+        "iso": "IN",
+        "phone_code": "+91",
+        "flag": "https://flagsapi.com/IN/flat/64.png"
+    },
+    {
+        "name": "Indonésie",
+        "iso": "ID",
+        "phone_code": "+62",
+        "flag": "https://flagsapi.com/ID/flat/64.png"
+    },
+    {
+        "name": "Israël",
+        "iso": "IL",
+        "phone_code": "+972",
+        "flag": "https://flagsapi.com/IL/flat/64.png"
+    },
+    {
+        "name": "Japon",
+        "iso": "JP",
+        "phone_code": "+81",
+        "flag": "https://flagsapi.com/JP/flat/64.png"
+    },
+    {
+        "name": "Jordanie",
+        "iso": "JO",
+        "phone_code": "+962",
+        "flag": "https://flagsapi.com/JO/flat/64.png"
+    },
+    {
+        "name": "Koweït",
+        "iso": "KW",
+        "phone_code": "+965",
+        "flag": "https://flagsapi.com/KW/flat/64.png"
+    },
+    {
+        "name": "Liban",
+        "iso": "LB",
+        "phone_code": "+961",
+        "flag": "https://flagsapi.com/LB/flat/64.png"
+    },
+    {
+        "name": "Malaisie",
+        "iso": "MY",
+        "phone_code": "+60",
+        "flag": "https://flagsapi.com/MY/flat/64.png"
+    },
+    {
+        "name": "Philippines",
+        "iso": "PH",
+        "phone_code": "+63",
+        "flag": "https://flagsapi.com/PH/flat/64.png"
+    },
+    {
+        "name": "Qatar",
+        "iso": "QA",
+        "phone_code": "+974",
+        "flag": "https://flagsapi.com/QA/flat/64.png"
+    },
+    {
+        "name": "Singapour",
+        "iso": "SG",
+        "phone_code": "+65",
+        "flag": "https://flagsapi.com/SG/flat/64.png"
+    },
+    {
+        "name": "Thaïlande",
+        "iso": "TH",
+        "phone_code": "+66",
+        "flag": "https://flagsapi.com/TH/flat/64.png"
+    },
+    {
+        "name": "Turquie",
+        "iso": "TR",
+        "phone_code": "+90",
+        "flag": "https://flagsapi.com/TR/flat/64.png"
+    },
+    {
+        "name": "Vietnam",
+        "iso": "VN",
+        "phone_code": "+84",
+        "flag": "https://flagsapi.com/VN/flat/64.png"
+    },
+    {
+        "name": "Australie",
+        "iso": "AU",
+        "phone_code": "+61",
+        "flag": "https://flagsapi.com/AU/flat/64.png"
+    },
+    {
+        "name": "Nouvelle-Zélande",
+        "iso": "NZ",
+        "phone_code": "+64",
+        "flag": "https://flagsapi.com/NZ/flat/64.png"
+    },
+    {
+        "name": "Fidji",
+        "iso": "FJ",
+        "phone_code": "+679",
+        "flag": "https://flagsapi.com/FJ/flat/64.png"
+    },
+    {
+        "name": "Papouasie-Nouvelle-Guinée",
+        "iso": "PG",
+        "phone_code": "+675",
+        "flag": "https://flagsapi.com/PG/flat/64.png"
+    }
+]

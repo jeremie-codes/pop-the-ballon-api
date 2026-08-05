@@ -77,10 +77,10 @@ class AuthController extends Controller
                 ]
             );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Token de notification mis a jour'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Token de notification mis a jour'
+            ]);
         } catch (\Throwable $e) {
             logger()->error('AuthController.savePushToken error', [
                 'error' => $e->getMessage(),
@@ -156,12 +156,36 @@ class AuthController extends Controller
         ]);
     }
 
+    public function checkIdentity(Request $request)
+    {
+        $data = $request->validate([
+            'username'=>'required|string',
+            'phone'=>'required|string',
+            'email'=>'nullable|email',
+        ]);
+
+
+        return response()->json([
+
+            'username_available' =>
+            !User::where('username',Str::lower($data['username']))->exists(),
+
+            'phone_available' =>
+            !User::where('phone',$data['phone'])->exists(),
+
+            'email_available' =>
+            empty($data['email']) ||
+            !User::where('email',$data['email'])->exists(),
+
+        ]);
+    }
+
     public function forgotPassword(Request $request)
     {
         try {
 
             $data = $request->validate([
-                'identifier' => ['required','string'],
+                'identifier' => ['required', 'string'],
             ]);
 
             $identifier = Str::lower(trim($data['identifier']));
@@ -173,7 +197,6 @@ class AuthController extends Controller
                         ->whereRaw('LOWER(email) = ?', [$identifier])
                         ->orWhereRaw('LOWER(username) = ?', [$identifier])
                         ->orWhere('phone', $data['identifier']);
-
                 })
                 ->first();
 
@@ -181,57 +204,97 @@ class AuthController extends Controller
             if (! $user) {
 
                 return response()->json([
-                    'success'=>true,
-                    'message'=>'Si un compte existe, un code sera envoyé.'
+                    'success' => true,
+                    'message' => 'Si un compte existe, un code sera envoyé.'
                 ]);
-
             }
 
-            if(blank($user->email)) {
+            if (blank($user->email)) {
 
                 return response()->json([
-                    'success'=>false,
-                    'code'=>'email_required',
-                    'message'=>"Votre compte n'a pas d'adresse email."
-                ],422);
+                    'success' => false,
+                    'code' => 'email_required',
+                    'message' => "Votre compte n'a pas d'adresse email."
+                ], 422);
+            }
 
+            // Vérification blocage temporaire
+            if (
+                $user->password_reset_blocked_until &&
+                now()->lessThan($user->password_reset_blocked_until)
+            ) {
+                $minutes = now()->diffInMinutes(
+                    $user->password_reset_blocked_until
+                );
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Réessayez dans {$minutes} minute(s)."
+                ], 422);
+            }
+
+            // Anti spam renvoi OTP
+            if (
+                $user->password_reset_last_sent_at
+                &&
+                now()->diffInSeconds(
+                    $user->password_reset_last_sent_at
+                ) < 60
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Veuillez attendre avant de demander un nouveau code.'
+                ], 422);
+            }
+
+            if (
+                $user->password_reset_last_sent_at
+                &&
+                $user->password_reset_last_sent_at->isToday()
+                &&
+                $user->password_reset_requests >= 5
+            ) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Nombre maximum de demandes atteint aujourd’hui.'
+                ], 422);
             }
 
             // génération OTP
-            $otp = random_int(100000,999999);
+            $otp = random_int(100000, 999999);
 
             $user->update([
                 'password_reset_otp' => $otp,
-                'password_reset_otp_expires_at'
-                    => now()->addMinutes(10),
+                'password_reset_otp_expires_at' => now()->addMinutes(10),
+                'password_reset_attempts' => 0,
+                'password_reset_requests' => $user->password_reset_last_sent_at && $user->password_reset_last_sent_at->isToday() ? $user->password_reset_requests + 1 : 1,
+                'password_reset_last_sent_at' => now(),
             ]);
 
             // envoi mail
             Mail::raw(
                 "Votre code de récupération est : {$otp}",
-                function($message) use($user){
+                function ($message) use ($user) {
                     $message->to($user->email)->subject("Code de récupération du mot de passe");
                 }
             );
 
             return response()->json([
-                'success'=>true,
+                'success' => true,
                 'message' => 'Un code a été envoyé à votre adresse email.'
             ]);
-
-
-        } catch(\Throwable $e){
+        } catch (\Throwable $e) {
             logger()->error(
                 'forgotPassword error',
                 [
-                    'error'=>$e->getMessage()
+                    'error' => $e->getMessage()
                 ]
             );
 
             return response()->json([
-                'message'=>'Erreur interne'
-            ],500);
-
+                'message' => 'Erreur interne'
+            ], 500);
         }
     }
 
@@ -240,64 +303,76 @@ class AuthController extends Controller
         try {
 
             $data = $request->validate([
-                'identifier'=>['required','string'],
-                'otp'=>['required','string']
+                'identifier' => ['required', 'string'],
+                'otp' => ['required', 'string']
             ]);
 
             $identifier = Str::lower(trim($data['identifier']));
 
             $user = User::query()
-                ->where(function($query) use($identifier,$data){
-                    $query->whereRaw('LOWER(email)=?',[$identifier])
-                    ->orWhereRaw('LOWER(username)=?',[$identifier])
-                    ->orWhere('phone',$data['identifier']);
+                ->where(function ($query) use ($identifier, $data) {
+                    $query->whereRaw('LOWER(email)=?', [$identifier])
+                        ->orWhereRaw('LOWER(username)=?', [$identifier])
+                        ->orWhere('phone', $data['identifier']);
                 })
                 ->first();
 
-            if(!$user){
+            if (!$user) {
                 return response()->json([
-                    'success'=>false,
-                    'message'=>'Compte introuvable'
-                ],404);
+                    'success' => false,
+                    'message' => 'Compte introuvable'
+                ], 404);
             }
 
-            if( $user->password_reset_otp !== $data['otp'] || now()->greaterThan($user->password_reset_otp_expires_at) ){
+            if ($user->password_reset_attempts >= 5) {
+                $user->update([
+                    'password_reset_blocked_until' => now()->addMinutes(1)
+                ]);
+
                 return response()->json([
-                    'success'=>false,
-                    'message'=>'Code invalide ou expiré'
-                ],422);
+                    'success' => false,
+                    'message' => 'Trop de tentatives. Compte temporairement bloqué. Ressayez dans 1 minute.'
+                ], 422);
+            }
+
+            if ($user->password_reset_otp !== $data['otp'] || now()->greaterThan($user->password_reset_otp_expires_at)) {
+
+                $user->increment('password_reset_attempts');
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Code invalide ou expiré'
+                ], 422);
             }
 
             return response()->json([
-                'success'=>true,
-                'reset_token'=>encrypt([
-                    'user_id'=>$user->id,
-                    'time'=>now()
+                'success' => true,
+                'reset_token' => encrypt([
+                    'user_id' => $user->id,
+                    'time' => now()
                 ])
 
             ]);
-        } catch(\Throwable $e){
+        } catch (\Throwable $e) {
             logger()->error(
                 'verifyResetOtp error',
                 [
-                    'error'=>$e->getMessage()
+                    'error' => $e->getMessage()
                 ]
             );
 
             return response()->json([
-                'message'=>'Erreur interne'
-            ],500);
-
+                'message' => 'Erreur interne'
+            ], 500);
         }
-
     }
 
     public function resetPassword(Request $request)
     {
         try {
-            $data=$request->validate([
-                'reset_token'=>'required|string',
-                'password'=>['required', 'confirmed', Password::min(8)]
+            $data = $request->validate([
+                'reset_token' => 'required|string',
+                'password' => ['required', 'confirmed', Password::min(8)]
             ]);
 
             $payload = decrypt($data['reset_token']);
@@ -307,33 +382,29 @@ class AuthController extends Controller
             );
 
             $user->update([
-                'password'=>Hash::make($data['password']),
-                'password_reset_otp'=>null,
-                'password_reset_otp_expires_at'=>null,
-                'remember_token'=>Str::random(60)
+                'password' => Hash::make($data['password']),
+                'password_reset_otp' => null,
+                'password_reset_otp_expires_at' => null,
+                'remember_token' => Str::random(60)
             ]);
 
             return response()->json([
-                'success'=>true,
-                'message'=>'Mot de passe modifié avec succès.'
+                'success' => true,
+                'message' => 'Mot de passe modifié avec succès.'
             ]);
-
-
-        } catch (\Throwable $e){
+        } catch (\Throwable $e) {
             logger()->error(
                 'resetPassword error',
                 [
-                    'error'=>$e->getMessage()
+                    'error' => $e->getMessage()
                 ]
             );
 
             return response()->json([
-                'success'=>false,
-                'message'=>'Lien de récupération invalide'
-            ],422);
-
+                'success' => false,
+                'message' => 'Lien de récupération invalide'
+            ], 422);
         }
-
     }
 
     private function authResponse(User $user): array
@@ -363,7 +434,7 @@ class AuthController extends Controller
                 'intention' => $user->intention,
                 'bio' => $user->bio,
                 'avatar' => optional($user->photos->first())->path,
-                'pictures' => $user->photos->map(fn ($photo) => [
+                'pictures' => $user->photos->map(fn($photo) => [
                     'id' => (string) $photo->id,
                     'name' => $photo->path,
                     'isPrimary' => (bool) $photo->is_primary,

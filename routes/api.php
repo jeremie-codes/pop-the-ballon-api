@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\VerificationPaymentController;
 use Illuminate\Support\Facades\Broadcast;
@@ -30,6 +31,7 @@ Route::prefix('otp')->group(function () {
     Route::post('login', [OtpController::class, 'login']);
 });
 
+Route::get('/countries', [ConfigController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
@@ -153,8 +155,8 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('support/conversation', [SupportRequestController::class, 'conversation']); 
-    Route::post('support/request/client', [SupportRequestController::class, 'storeRequestClient']); 
+    Route::get('support/conversation', [SupportRequestController::class, 'conversation']);
+    Route::post('support/request/client', [SupportRequestController::class, 'storeRequestClient']);
 
     /*
     |--------------------------------------------------------------------------
