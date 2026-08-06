@@ -42,6 +42,7 @@ class MatchCreated implements ShouldBroadcastNow
                 'conversationId' => (string) $this->conversation->id,
                 'name' => $this->matchedUser->displayName(),
                 'avatar' => optional($this->matchedUser->photos->first())->path ?? '',
+                'verified' => $this->matchedUser->isVerified(),
             ],
         ];
     }

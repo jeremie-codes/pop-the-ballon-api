@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
-    Route::get('check-username', [AuthController::class, 'checkUsername']);
+    Route::get('check-identity', [AuthController::class, 'checkIdentity']);
     Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->name('password.forgot');
     Route::post('/verify-reset-otp', [AuthController::class,'verifyResetOtp']);
     Route::post('password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');

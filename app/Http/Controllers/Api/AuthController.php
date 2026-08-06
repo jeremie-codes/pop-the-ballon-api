@@ -100,7 +100,7 @@ class AuthController extends Controller
                 'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
                 'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
                 'password' => ['required', Password::min(8)],
-                'birth_date' => ['nullable', 'date'],
+                'birth_date'=>[ 'required', 'date'],
                 'gender' => ['nullable', 'string', 'max:50'],
                 'city' => ['nullable', 'string', 'max:120'],
                 'country' => ['nullable', 'string', 'max:120'],
@@ -144,18 +144,6 @@ class AuthController extends Controller
         }
     }
 
-    public function checkUsername(Request $request)
-    {
-        $data = $request->validate(['username' => ['required', 'string', 'max:50']]);
-        $username = Str::lower($data['username']);
-        $available = ! User::query()->where('username', $username)->exists();
-
-        return response()->json([
-            'available' => $available,
-            'message' => $available ? 'Nom d utilisateur disponible' : 'Ce nom d utilisateur est déjà pris',
-        ]);
-    }
-
     public function checkIdentity(Request $request)
     {
         $data = $request->validate([
@@ -164,19 +152,33 @@ class AuthController extends Controller
             'email'=>'nullable|email',
         ]);
 
+        $email = Str::lower($data['email']);
+
+        $reserved = [
+            'admin',
+            'support',
+            'help',
+            'root',
+            'system',
+            'api',
+            'contact',
+            'staff',
+            'official',
+            'poptheballon',
+        ];
+
+        if (in_array(Str::lower($data['username']), $reserved)) {
+            return response()->json([
+                'username_available' => false,
+                'phone_available' => !User::where('phone',$data['phone'])->exists(),
+                'email_available' => empty($email) || !User::where('email', $email)->exists(),
+            ]);
+        }
 
         return response()->json([
-
-            'username_available' =>
-            !User::where('username',Str::lower($data['username']))->exists(),
-
-            'phone_available' =>
-            !User::where('phone',$data['phone'])->exists(),
-
-            'email_available' =>
-            empty($data['email']) ||
-            !User::where('email',$data['email'])->exists(),
-
+            'username_available' => !User::where('username',Str::lower($data['username']))->exists(),
+            'phone_available' => !User::where('phone',$data['phone'])->exists(),
+            'email_available' => empty($email) || !User::where('email', $email)->exists(),
         ]);
     }
 

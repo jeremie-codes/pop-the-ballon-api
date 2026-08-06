@@ -48,7 +48,7 @@
 
             <div class="flex justify-end">
 
-                <div class="max-w-md min-w-28 text-white bg-[#BF296D] rounded-t-xl rounded-bl-xl {{ $msg->type->value === 'image' || $msg->type->value === 'video' ? 'p-1': 'px-4 py-2' }}">
+                <div class="max-w-md min-w-28 text-white bg-[#f45164] rounded-t-xl rounded-bl-xl {{ $msg->type->value === 'image' || $msg->type->value === 'video' ? 'p-1': 'px-4 py-2' }}">
 
                     @if($msg->type->value === 'text')
 
@@ -118,7 +118,7 @@
 
             <textarea wire:model="message" class="flex-1 px-4 py-3 border rounded-xl bg-black/30" placeholder="Écrire un message..." rows="1"></textarea>
 
-            <button type="submit" class="px-5 py-3 text-white bg-[#BF296D] rounded-xl">
+            <button type="submit" class="px-5 py-3 text-white bg-[#f45164] rounded-xl">
                 Envoyer
             </button>
 

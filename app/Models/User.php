@@ -121,6 +121,11 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->is_staff;
     }
 
+    public function isVerified(): bool
+    {
+        return $this->verified;
+    }
+
     public function supportConversations()
     {
         return Conversation::where('type', 'support')
