@@ -16,6 +16,7 @@ class DiscoverProfileService
             ->with(['photos', 'interests'])
             ->where('is_visible', true)
             ->where('is_staff', false)
+            ->where('deleted_at', null)
             ->where('role', '!=', 'admin')
             ->where('role', '!=', 'support')
             ->latest();

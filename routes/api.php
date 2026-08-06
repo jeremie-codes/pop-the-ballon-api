@@ -24,6 +24,8 @@ Route::prefix('auth')->group(function () {
     Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->name('password.forgot');
     Route::post('/verify-reset-otp', [AuthController::class,'verifyResetOtp']);
     Route::post('password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
+
+    Route::delete('delete/account', [AuthController::class, 'deleteAccount']);
 });
 
 Route::prefix('otp')->group(function () {

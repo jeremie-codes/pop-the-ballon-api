@@ -22,19 +22,44 @@ class ProfileController extends Controller
         return response()->json(
             DiscoverFeedResource::collection($feed)->resolve()
         );
-
     }
 
     public function me(Request $request)
     {
         try {
-            return response()->json($this->userPayload($request->user('sanctum')->load(['photos', 'interests'])));
+            $user = $request->user('sanctum');
+
+            if (! $user) {
+                return response()->json([
+                    'message' => 'Non authentifié.'
+                ], 401);
+            }
+
+            if ($user->deleted_at) {
+
+                // Supprime tous les tokens restants
+                $user->tokens()->delete();
+
+                return response()->json([
+                    'code' => 'account_deleted',
+                    'message' => 'Ce compte a été supprimé.'
+                ], 403);
+            }
+
+            return response()->json(
+                $this->userPayload(
+                    $user->load(['photos', 'interests'])
+                )
+            );
         } catch (\Throwable $e) {
             logger()->error('ProfileController.me error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return response()->json(['message' => 'Erreur lors de la récupération du profil.'], 500);
+
+            return response()->json([
+                'message' => 'Erreur lors de la récupération du profil.'
+            ], 500);
         }
     }
 
