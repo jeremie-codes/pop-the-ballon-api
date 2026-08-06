@@ -32,6 +32,14 @@ class AuthController extends Controller
                 ->orWhere('phone', $data['identifier'])
                 ->first();
 
+            if ($user && $user->deleted_at) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 'account_deleted',
+                    'message' => 'Ce compte a été supprimé.'
+                ], 403);
+            }
+
             if (! $user || ! Hash::check($data['password'], $user->password)) {
                 return response()->json(['message' => 'Identifiant ou mot de passe incorrect'], 422);
             }
@@ -447,5 +455,41 @@ class AuthController extends Controller
                 'interests' => $user->interests->pluck('name')->values(),
             ],
         ];
+    }
+
+    public function deleteAccount(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'string'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mot de passe incorrect.'
+            ], 422);
+        }
+
+        DB::transaction(function () use ($user, $request) {
+
+            $user->update([
+                'deleted_at' => now(),
+                'delete_reason' => $request->reason,
+                'is_visible' => false,
+                'remember_token' => Str::random(60),
+            ]);
+
+            UserDevice::where('user_id', $user->id)->delete();
+
+            $user->tokens()->delete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre compte a été supprimé.'
+        ]);
     }
 }
