@@ -40,6 +40,13 @@ class User extends Authenticatable implements FilamentUser, HasName
         'avatar',
         'is_visible',
         'last_seen_at',
+        'deleted_at',
+        'delete_reason',
+        'password_reset_attempts',
+        'password_reset_requests',
+        'password_reset_otp_expires_at',
+        'password_reset_last_sent_at',
+        'password_reset_blocked_until',
     ];
 
     public function interests()
@@ -105,6 +112,7 @@ class User extends Authenticatable implements FilamentUser, HasName
             'verified' => 'boolean',
             'last_seen_at' => 'datetime',
             'password' => 'hashed',
+            'deleted_at' => 'datetime',
             'password_reset_otp_expires_at' => 'datetime',
             'password_reset_last_sent_at'=>'datetime',
             'password_reset_blocked_until'=>'datetime',

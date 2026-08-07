@@ -25,7 +25,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/verify-reset-otp', [AuthController::class,'verifyResetOtp']);
     Route::post('password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
 
-    Route::delete('delete/account', [AuthController::class, 'deleteAccount']);
+    Route::post('delete/account', [AuthController::class, 'deleteAccount']);
 });
 
 Route::prefix('otp')->group(function () {
@@ -67,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('me', [ProfileController::class, 'me']);
     Route::patch('me', [ProfileController::class, 'update']);
+    Route::patch('me/password', [ProfileController::class, 'updatePassword']);
     Route::post('me/profile-photo', [ProfileController::class, 'uploadPhoto']);
     Route::delete('me/profile-photo/{photo}', [ProfileController::class, 'deletePhoto']);
 

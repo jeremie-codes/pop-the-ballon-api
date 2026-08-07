@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\DiscoverFeedResource;
 use App\Models\MessageCredit;
 use App\Services\DiscoverFeedService;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -66,11 +67,15 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         try {
+            $user = $request->user('sanctum');
+
             $data = $request->validate([
                 'first_name' => ['sometimes', 'required', 'string', 'max:255'],
                 'last_name' => ['sometimes', 'required', 'string', 'max:255'],
                 'birth_date' => ['sometimes', 'nullable', 'date'],
                 'gender' => ['sometimes', 'nullable', 'string', 'max:50'],
+                'phone' => ['sometimes', 'nullable', 'string', 'max:15'],
+                'email' => ['sometimes', 'nullable', 'email', 'max:80'],
                 'city' => ['sometimes', 'nullable', 'string', 'max:120'],
                 'country' => ['sometimes', 'nullable', 'string', 'max:120'],
                 'intention' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -79,9 +84,46 @@ class ProfileController extends Controller
                 'interests.*' => ['string', 'max:80'],
             ]);
 
-            $user = DB::transaction(function () use ($data, $request) {
-                $user = $request->user('sanctum');
+            /*
+            |--------------------------------------------------------------------------
+            | Vérification de l'email
+            |--------------------------------------------------------------------------
+            */
+            if (array_key_exists('email', $data) && !empty($data['email'])) {
+
+                $emailExists = User::where('email', $data['email'])
+                    ->where('id', '!=', $user->id)
+                    ->exists();
+
+                if ($emailExists) {
+                    return response()->json([
+                        'message' => 'Cette adresse email est déjà utilisée par un autre compte.'
+                    ], 422);
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Vérification du téléphone
+            |--------------------------------------------------------------------------
+            */
+            if (array_key_exists('phone', $data) && !empty($data['phone'])) {
+
+                $phoneExists = User::where('phone', $data['phone'])
+                    ->where('id', '!=', $user->id)
+                    ->exists();
+
+                if ($phoneExists) {
+                    return response()->json([
+                        'message' => 'Ce numéro de téléphone est déjà utilisé par un autre compte.'
+                    ], 422);
+                }
+            }
+
+            $user = DB::transaction(function () use ($data, $user) {
+
                 $interests = $data['interests'] ?? null;
+
                 unset($data['interests']);
 
                 $user->forceFill($data)->save();
@@ -90,21 +132,79 @@ class ProfileController extends Controller
                     $user->interests()->delete();
 
                     foreach ($interests as $interest) {
-                        $user->interests()->create(['name' => $interest]);
+                        $user->interests()->create([
+                            'name' => $interest
+                        ]);
                     }
                 }
 
-                return $user->load(['photos', 'interests']);
+                return $user->load([
+                    'photos',
+                    'interests'
+                ]);
             });
 
-            return response()->json($this->userPayload($user));
+            return response()->json(
+                $this->userPayload($user)
+            );
         } catch (\Throwable $e) {
+
             logger()->error('ProfileController.update error', [
                 'user_id' => $request->user('sanctum')?->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return response()->json(['message' => 'Erreur lors de la mise à jour du profil.'], 500);
+
+            return response()->json([
+                'message' => 'Erreur lors de la mise à jour du profil.'
+            ], 500);
+        }
+    }
+
+    public function updatePassword(Request $request)
+    {
+        try {
+            $user = $request->user('sanctum');
+
+            $data = $request->validate([
+                'password' => ['required', 'string', 'min:8', 'confirmed']
+            ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Empêcher de remettre le même mot de passe
+            |--------------------------------------------------------------------------
+            */
+            if (Hash::check($data['password'], $user->password)) {
+                return response()->json([
+                    'message' => 'Le nouveau mot de passe doit être différent de l’ancien.'
+                ], 422);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Mise à jour
+            |--------------------------------------------------------------------------
+            */
+            $user->update([
+                'password' => Hash::make($data['password']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mot de passe mis à jours avec succès.'
+            ]);
+        } catch (\Throwable $e) {
+
+            logger()->error('ProfileController.updatePassword error', [
+                'user_id' => $request->user('sanctum')?->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Erreur lors de la mise à jour du mot de passe.'
+            ], 500);
         }
     }
 

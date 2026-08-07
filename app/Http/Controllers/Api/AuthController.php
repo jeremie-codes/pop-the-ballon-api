@@ -107,7 +107,7 @@ class AuthController extends Controller
                 'username' => 'required|string|max:255|unique:users,username',
                 'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
                 'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
-                'password' => ['required', Password::min(8)],
+                'password' => ['required', 'min:8'],
                 'birth_date'=>[ 'required', 'date'],
                 'gender' => ['nullable', 'string', 'max:50'],
                 'city' => ['nullable', 'string', 'max:120'],
@@ -459,37 +459,45 @@ class AuthController extends Controller
 
     public function deleteAccount(Request $request)
     {
-        $request->validate([
-            'password' => ['required', 'string'],
-            'reason' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $user = $request->user();
-
-        if (! Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Mot de passe incorrect.'
-            ], 422);
-        }
-
-        DB::transaction(function () use ($user, $request) {
-
-            $user->update([
-                'deleted_at' => now(),
-                'delete_reason' => $request->reason,
-                'is_visible' => false,
-                'remember_token' => Str::random(60),
+       try {
+            $request->validate([
+                'reason' => ['nullable', 'string', 'max:255'],
             ]);
 
-            UserDevice::where('user_id', $user->id)->delete();
+            $user = $request->user('sanctum');
 
-            $user->tokens()->delete();
-        });
+            DB::transaction(function () use ($user, $request) {
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Votre compte a été supprimé.'
-        ]);
+                $user->update([
+                    'deleted_at' => now(),
+                    'delete_reason' => $request->reason,
+                    'is_visible' => false,
+                    'last_seen_at' => now(),
+                    'remember_token' => Str::random(60),
+                ]);
+
+                UserDevice::where('user_id', $user->id)->delete();
+
+                $user->tokens()->delete();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Votre compte a été supprimé.'
+            ]);
+        }
+        catch (\Exception $e) {
+            logger()->error(
+                'deleteAccount error',
+                [
+                    'error' => $e->getMessage()
+                ]
+            );
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de suppression de votre compte.'
+            ], 422);
+        }
     }
 }
