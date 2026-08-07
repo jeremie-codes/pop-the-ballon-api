@@ -33,6 +33,9 @@ class Campaign extends Model
         return [
             'start_at' => 'datetime',
             'end_at' => 'datetime',
+            'priority' => 'integer',
+            'budget' => 'decimal:2',
+            'price' => 'decimal:2',
         ];
     }
 

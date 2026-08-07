@@ -17,12 +17,36 @@ use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
-    public function discoverFeed(Request $request)
+    /*public function discoverFeed(Request $request)
     {
         $feed = app(DiscoverFeedService::class)->build($request->user('sanctum'));
         return response()->json(
             DiscoverFeedResource::collection($feed)->resolve()
         );
+    }*/
+
+    public function discoverFeed(Request $request)
+    {
+        $request->validate([
+            'limit' => ['nullable','integer','min:1','max:30'],
+            'cursor' => ['nullable','string'],
+        ]);
+
+        $limit = $request->integer('limit', 12);
+
+        $result = app(DiscoverFeedService::class)->build(
+            $request->user('sanctum'),
+            $limit,
+            $request->input('cursor')
+        );
+
+        return response()->json([
+            'data' => DiscoverFeedResource::collection(
+                $result['data']
+            )->resolve(),
+            'next_cursor' => $result['next_cursor'],
+            'has_more' => $result['has_more'],
+        ]);
     }
 
     public function me(Request $request)
