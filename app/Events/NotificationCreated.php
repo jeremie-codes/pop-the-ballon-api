@@ -50,7 +50,7 @@ class NotificationCreated implements ShouldBroadcastNow
                     ? (string) $this->notification->conversation_id
                     : null,
 
-                'avatar' => $this->notification->avatar,
+                'avatar' => null,
             ],
         ];
     }

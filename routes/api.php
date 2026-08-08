@@ -128,6 +128,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('message-bundles', [MessageBundleController::class, 'index']);
     Route::post('message-bundles/{messageBundle}/purchase', [MessageBundleController::class, 'purchaseBundle']);
     Route::post('message-bundle-requests', [MessageBundleController::class, 'requestBundle']);
+    Route::post('message-bundles/free', [MessageBundleController::class, 'purchaseFreeBundle']);
     Route::get('marketplace-items', [MarketplaceController::class, 'index']);
 
     Route::post('payments/initiate', [MessageBundleController::class, 'initiate']);

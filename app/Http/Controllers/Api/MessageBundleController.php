@@ -65,8 +65,6 @@ class MessageBundleController extends Controller
                 'profile_id' => $requester->id,
             ]);
 
-
-
             foreach ($target->devices as $device) {
                 $expo->send(
                     $device->expo_token,
@@ -75,6 +73,7 @@ class MessageBundleController extends Controller
                     [
                         'type' => 'bundle_request',
                         'user_id' => $actor->id,
+                        'url' => '/(app)/profile-detail/' . $actor->id,
                     ]
                 );
             }
@@ -286,6 +285,8 @@ class MessageBundleController extends Controller
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $user->id,
+                                            'mine' => false,
+                                            'url' => '/(app)/notifications'
                                         ]
                                     );
                                 }
@@ -302,6 +303,8 @@ class MessageBundleController extends Controller
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $actor->id,
+                                            'mine' => true,
+                                            'url' => '/(main)/profile'
                                         ]
                                     );
                                 }
@@ -314,8 +317,6 @@ class MessageBundleController extends Controller
                                     'profile_id' => $user->id,
                                 ]);
 
-
-
                                 $targets = $user->devices;
 
                                 foreach ($targets as $device) {
@@ -326,6 +327,8 @@ class MessageBundleController extends Controller
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $user->id,
+                                            'mine' => true,
+                                            'url' => '/(main)/profile'
                                         ]
                                     );
                                 }
@@ -488,6 +491,8 @@ class MessageBundleController extends Controller
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $user->id,
+                                            'mine' => false,
+                                            'url' => '/(app)/notifications'
                                         ]
                                     );
                                 }
@@ -504,6 +509,8 @@ class MessageBundleController extends Controller
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $actor->id,
+                                            'mine' => true,
+                                            'url' => '/(main)/profile'
                                         ]
                                     );
                                 }
@@ -528,6 +535,8 @@ class MessageBundleController extends Controller
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $user->id,
+                                            'mine' => true,
+                                            'url' => '/(main)/profile'
                                         ]
                                     );
                                 }
@@ -659,6 +668,8 @@ class MessageBundleController extends Controller
                             [
                                 'type' => 'bundle_purchase',
                                 'user_id' => $user->id,
+                                'mine' => false,
+                                'url' => '/(app)/notifications',
                             ]
                         );
                     }
@@ -675,6 +686,8 @@ class MessageBundleController extends Controller
                             [
                                 'type' => 'bundle_purchase',
                                 'user_id' => $actor->id,
+                                'mine' => true,
+                                'url' => '/(main)/profile'
                             ]
                         );
                     }
@@ -698,6 +711,8 @@ class MessageBundleController extends Controller
                             [
                                 'type' => 'bundle_purchase',
                                 'user_id' => $user->id,
+                                'mine' => true,
+                                'url' => '/(main)/profile'
                             ]
                         );
                     }
@@ -746,5 +761,260 @@ class MessageBundleController extends Controller
         return response()->json([
             'message' => 'Paiement déjà clôturé',
         ]);
+    }
+
+    public function purchaseFreeBundle(
+        Request $request,
+        ExpoNotificationService $expo
+    ) {
+        try {
+            $data = $request->validate([
+                'user_id' => ['required', 'exists:users,id'],
+                'bundle_id' => ['required', 'exists:message_bundles,id'],
+                'currency' => ['required', 'in:USD,CDF'],
+            ]);
+
+            $actor = $request->user('sanctum');
+
+            if (!$actor) {
+                return response()->json([
+                    'code' => 1,
+                    'message' => 'Utilisateur non authentifié',
+                ], 401);
+            }
+
+            $user = User::query()
+                ->with(['devices', 'photos'])
+                ->findOrFail($data['user_id']);
+
+            $bundle = MessageBundle::query()
+                ->findOrFail($data['bundle_id']);
+
+            /*
+            * Vérification importante :
+            * le bundle doit réellement être gratuit
+            * dans la devise sélectionnée.
+            */
+            $amount = $data['currency'] === 'USD'
+                ? $bundle->price
+                : $bundle->equivalent;
+
+            if ((float) $amount !== 0.0) {
+                return response()->json([
+                    'code' => 1,
+                    'message' => 'Ce forfait n’est pas gratuit.',
+                ], 422);
+            }
+
+            /*
+            * On évite qu'un bundle inactif puisse être acheté.
+            */
+            if (!$bundle->active) {
+                return response()->json([
+                    'code' => 1,
+                    'message' => 'Ce forfait n’est plus disponible.',
+                ], 422);
+            }
+
+            /*
+            * L'acheteur est toujours l'utilisateur authentifié.
+            * On ne fait donc pas confiance à un requester_id
+            * envoyé depuis le mobile.
+            */
+            $buyer = $actor;
+
+            /*
+            * Référence interne pour l'achat gratuit.
+            */
+            $reference = 'MB-FREE-' . strtoupper(uniqid());
+
+            /*
+            * Dans ton système actuel :
+            *
+            * transaction.user_id = requester_id ?? user_id
+            *
+            * Donc ici on conserve la même logique :
+            * la transaction appartient à l'acheteur.
+            */
+            $transaction = null;
+
+            DB::transaction(function () use (
+                &$transaction,
+                $buyer,
+                $user,
+                $bundle,
+                $data,
+                $reference,
+                $expo
+            ) {
+                /*
+                * 1. Création de la transaction directement en SUCCESS
+                */
+                $transaction = Transaction::create([
+                    'user_id' => $buyer->id,
+                    'bundle_id' => $bundle->id,
+                    'reference' => $reference,
+                    'amount' => 0,
+                    'currency' => $data['currency'],
+                    'phone' => null,
+                    'payment_method' => 'free',
+                    'order_number' => null,
+                    'status' => 'success',
+                    'description' => $buyer->id !== $user->id
+                        ? 'Forfait gratuit offert par ' . $buyer->displayName()
+                        : 'Forfait gratuit acheté pour soi-même',
+                ]);
+
+                /*
+                * 2. Ajouter les crédits au bénéficiaire
+                */
+                $credit = MessageCredit::firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'total_messages' => 0,
+                        'available_messages' => 0,
+                    ]
+                );
+
+                $messages = $bundle->messages;
+
+                $credit->increment(
+                    'total_messages',
+                    $messages
+                );
+
+                $credit->increment(
+                    'available_messages',
+                    $messages
+                );
+
+                /*
+                * 3. Achat pour quelqu'un d'autre
+                */
+                if ($user->id !== $buyer->id) {
+
+                    // Notification pour l'acheteur
+                    AppNotification::createAndBroadcast([
+                        'user_id' => $buyer->id,
+                        'title' => 'Achat de forfait',
+                        'message' => 'Vous avez offert le forfait messages '
+                            . $bundle->title
+                            . ' à '
+                            . $user->displayName()
+                            . '.',
+                        'kind' => 'bundle_purchase',
+                        'profile_id' => $user->id,
+                        'avatar' => optional(
+                            $user->photos->first()
+                        )->path,
+                    ]);
+
+                    // Notification pour le bénéficiaire
+                    AppNotification::createAndBroadcast([
+                        'user_id' => $user->id,
+                        'title' => 'Forfait messages reçu',
+                        'message' => $buyer->displayName()
+                            . ' vous a offert le forfait messages '
+                            . $bundle->title
+                            . '.',
+                        'kind' => 'bundle_purchase',
+                        'profile_id' => $buyer->id,
+                        'avatar' => optional(
+                            $buyer->photos->first()
+                        )->path,
+                    ]);
+
+                    /*
+                 * Push pour l'acheteur
+                 */
+                    foreach ($buyer->devices as $device) {
+                        $expo->send(
+                            $device->expo_token,
+                            '🎈PopTheBallon - Forfait gratuit',
+                            'Vous avez offert le forfait messages '
+                                . $bundle->title
+                                . ' à '
+                                . $user->displayName()
+                                . '.',
+                            [
+                                'type' => 'bundle_purchase',
+                                'user_id' => $user->id,
+                                'mine' => false,
+                                'url' => '/(app)/notifications',
+                            ]
+                        );
+                    }
+
+                    /*
+                 * Push pour le bénéficiaire
+                 */
+                    foreach ($user->devices as $device) {
+                        $expo->send(
+                            $device->expo_token,
+                            '🎈PopTheBallon - Forfait messages reçu',
+                            $buyer->displayName()
+                                . ' vous a offert le forfait messages '
+                                . $bundle->title
+                                . '.',
+                            [
+                                'type' => 'bundle_purchase',
+                                'user_id' => $buyer->id,
+                                'mine' => true,
+                                'url' => '/(main)/profile',
+                            ]
+                        );
+                    }
+                } else {
+
+                    /*
+                    * 4. Achat gratuit pour soi-même
+                    */
+                    AppNotification::createAndBroadcast([
+                        'user_id' => $user->id,
+                        'title' => 'Forfait gratuit activé',
+                        'message' => 'Vous avez activé gratuitement le forfait messages'
+                            . $bundle->title
+                            . '.',
+                        'kind' => 'bundle_purchase',
+                        'profile_id' => $user->id,
+                    ]);
+
+                    foreach ($user->devices as $device) {
+                        $expo->send(
+                            $device->expo_token,
+                            '🎈PopTheBallon - Forfait gratuit',
+                            'Vous avez activé gratuitement le forfait messages '
+                                . $bundle->title
+                                . '.',
+                            [
+                                'type' => 'bundle_purchase',
+                                'user_id' => $user->id,
+                                'mine' => true,
+                                'url' => '/(main)/profile',
+                            ]
+                        );
+                    }
+                }
+            });
+
+            return response()->json([
+                'code' => 0,
+                'status' => 'success',
+                'message' => 'Forfait gratuit activé avec succès.',
+            ], 201);
+        } catch (\Throwable $e) {
+
+            logger()->error('MessageBundleController.purchaseFreeBundle error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'code' => 1,
+                'message' => 'Erreur interne du serveur.',
+            ], 500);
+        }
     }
 }

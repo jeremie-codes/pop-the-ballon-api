@@ -25,7 +25,7 @@ class NotificationController extends Controller
                     'kind' => $notification->kind,
                     'profileId' => $notification->profile_id ? (string) $notification->profile_id : null,
                     'conversationId' => $notification->conversation_id ? (string) $notification->conversation_id : null,
-                    'avatar' => $notification->avatar,
+                    'avatar' => null,
                 ])
         );
     }
