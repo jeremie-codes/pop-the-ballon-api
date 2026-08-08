@@ -204,6 +204,8 @@ class ConversationController extends Controller
                     [
                         'type' => 'message',
                         'user_id' => $user->id,
+                        'conversation_id' => $conversation->id,
+                        'url' => '/(app)/conversation/' . $conversation->id
                     ]
                 );
             }
@@ -293,6 +295,13 @@ class ConversationController extends Controller
                 readerId: $user->id,
             );
 
+            // 5. Informer le Inbox de l'autre utilisateur
+            ConversationSeen::dispatch(
+                conversationId: $conversation->id,
+                senderId: $user->id,
+                readerId: $senderId,
+            );
+
             return response()->json([
                 'success' => true,
                 'message_ids' => $messageIds
@@ -316,7 +325,7 @@ class ConversationController extends Controller
         Conversation $conversation,
         User $viewer,
         bool $withMessages = false
-    ): array { 
+    ): array {
 
         $other = $conversation->user_one_id === $viewer->id
             ? $conversation->userTwo

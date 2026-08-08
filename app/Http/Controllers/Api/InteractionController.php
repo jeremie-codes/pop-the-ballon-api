@@ -141,6 +141,7 @@ class InteractionController extends Controller
                             [
                                 'type' => 'match',
                                 'user_id' => $actor->id,
+                                'url' => '/(main)/matches',
                             ]
                         );
                     }
@@ -167,6 +168,7 @@ class InteractionController extends Controller
                             [
                                 'type' => 'like',
                                 'user_id' => $actor->id,
+                                'url' => '/(main)/likes',
                             ]
                         );
                     }
