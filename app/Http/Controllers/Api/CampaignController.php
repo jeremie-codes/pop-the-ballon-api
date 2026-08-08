@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 class CampaignController extends Controller
 {
 
-    public function index()
+    /*public function index()
     {
         $campaigns = Campaign::query()
             ->with('media')
@@ -31,7 +31,7 @@ class CampaignController extends Controller
             ->get();
 
         return CampaignResource::collection($campaigns);
-    }
+    }*/
 
     public function show(Campaign $campaign)
     {
@@ -39,25 +39,48 @@ class CampaignController extends Controller
         return new CampaignResource($campaign);
     }
 
-    private function alreadyTracked(string $modelClass, Campaign $campaign, Request $request): bool
-    {
-        $query = $modelClass::where('campaign_id', $campaign->id);
+    private function alreadyTracked(
+        string $modelClass,
+        Campaign $campaign,
+        Request $request
+    ): bool {
+        $query = $modelClass::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('created_at', '>=', now()->subDay());
 
         if (auth()->check()) {
-            $query->where('user_id', auth()->id());
-        } else {
-            $query->where('visitor_id', $request->visitor_id);
+
+            return $query
+                ->where('user_id', auth()->id())
+                ->exists();
+        }
+
+        $visitorId = $this->getVisitorId($request);
+
+        if (!$visitorId) {
+            return false;
         }
 
         return $query
-            ->where('created_at', '>=', now()->subDay())
+            ->where('visitor_id', $visitorId)
             ->exists();
+    }
+
+    private function getVisitorId(Request $request): ?string
+    {
+        return $request->header('X-Visitor-Id');
     }
 
     public function view(Request $request, Campaign $campaign)
     {
         try {
-            if (! $this->alreadyTracked(CampaignView::class, $campaign, $request)) {
+
+            if (!$this->alreadyTracked(
+                CampaignView::class,
+                $campaign,
+                $request
+            )) {
+
                 CampaignView::create([
                     'campaign_id' => $campaign->id,
                     'user_id' => auth()->id(),
@@ -65,13 +88,13 @@ class CampaignController extends Controller
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                 ]);
+
                 $campaign->increment('views_count');
             }
 
             return response()->json([
                 'success' => true,
             ]);
-
         } catch (\Throwable $e) {
 
             logger()->error('Campaign view failed', [
@@ -80,7 +103,7 @@ class CampaignController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Erreur.'
+                'message' => 'Erreur.',
             ], 500);
         }
     }
@@ -108,7 +131,6 @@ class CampaignController extends Controller
                     'value' => $campaign->target_value,
                 ],
             ]);
-
         } catch (\Throwable $e) {
 
             logger()->error('Campaign click failed', [

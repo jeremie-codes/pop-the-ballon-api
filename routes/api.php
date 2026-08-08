@@ -51,8 +51,8 @@ Route::get('stories', [StoryController::class, 'index']);
 */
 
 Route::prefix('campaigns')->group(function () {
-    Route::get('/', [CampaignController::class, 'index']);
-    Route::get('/{campaign}', [CampaignController::class, 'show']);
+    //Route::get('/', [CampaignController::class, 'index']);
+    //Route::get('/{campaign}', [CampaignController::class, 'show']);
     Route::post('/{campaign}/view', [CampaignController::class, 'view']);
     Route::post('/{campaign}/click', [CampaignController::class, 'click']);
 });

@@ -1,69 +1,4 @@
 <?php
-/*
-namespace App\Services;
-
-use App\Models\User;
-use App\Services\DiscoverProfileService;
-use App\Services\CampaignService;
-
-class DiscoverFeedService
-{
-
-    protected CampaignService $campaignService;
-    protected DiscoverProfileService $profileService;
-
-
-    public function __construct(
-        CampaignService $campaignService,
-        DiscoverProfileService $profileService
-    ) {
-        $this->campaignService = $campaignService;
-        $this->profileService = $profileService;
-    }
-
-
-    public function build(?User $user = null)
-    {
-        $profiles = $this->profileService->getProfiles($user);
-        $campaigns = $this->campaignService->getActiveCampaigns();
-        return $this->mergeFeed($profiles,$campaigns);
-    }
-
-    private function mergeFeed($profiles, $campaigns)
-    {
-        $feed = [];
-
-        $profileIndex = 0;
-        $campaignIndex = 0;
-
-        while (
-            $profileIndex < $profiles->count() || $campaignIndex < $campaigns->count()
-        ) {
-            // 2 profils
-            for ($i = 0; $i < 2; $i++) {
-                if ($profileIndex < $profiles->count()) {
-                    $feed[] = [
-                        'type' => 'profile',
-                        'data' => $profiles[$profileIndex]
-                    ];
-                    $profileIndex++;
-                }
-            }
-
-            // 1 campagne
-            if ($campaignIndex < $campaigns->count()) {
-                $feed[] = [
-                    'type' => 'campaign',
-                    'data' => $campaigns[$campaignIndex]
-                ];
-                $campaignIndex++;
-            }
-        }
-
-        return $feed;
-    }
-
-}*/
 
 namespace App\Services;
 
@@ -72,6 +7,7 @@ use App\Models\User;
 class DiscoverFeedService
 {
     protected CampaignService $campaignService;
+
     protected DiscoverProfileService $profileService;
 
     public function __construct(
@@ -83,83 +19,109 @@ class DiscoverFeedService
     }
 
     /**
-     * Construire une page du feed.
+     * Construire une page du Feed.
      *
      * Structure :
      *
-     * 2 profils
-     * 1 campagne
-     * 2 profils
-     * 1 campagne
-     * ...
+     * P P C
+     * P P C
+     * P P C
+     *
+     * Les profils utilisent une pagination par cursor.
+     *
+     * Les campagnes sont sélectionnées aléatoirement
+     * et pondérées selon leur diffusion.
      */
     public function build(
         ?User $user = null,
         int $limit = 12,
         ?string $cursor = null
     ): array {
+
         $decodedCursor = $this->decodeCursor($cursor);
 
         $profileCursor = $decodedCursor['profile'] ?? null;
-        $campaignCursor = $decodedCursor['campaign'] ?? null;
+
+        $seenCampaignIds = $decodedCursor['campaign_seen'] ?? [];
+
+        if (!is_array($seenCampaignIds)) {
+            $seenCampaignIds = [];
+        }
 
         /*
-         * On demande suffisamment d'éléments aux deux sources.
-         *
-         * On demande "limit" profils et campagnes pour être certain
-         * de pouvoir remplir la page même si une des deux sources
-         * arrive à épuisement.
-         */
+        * Pour respecter :
+        *
+        * P P C
+        * P P C
+        * P P C
+        * P P C
+        *
+        * 12 éléments nécessitent 8 profils.
+        */
+        $profileLimit = (int) ceil($limit * 2 / 3);
+
+        /*
+        * +1 pour savoir s'il existe encore
+        * des profils après cette page.
+        */
         $profiles = $this->profileService->getProfiles(
             $user,
             $profileCursor,
-            $limit
+            $profileLimit + 1
         );
 
-        $campaigns = $this->campaignService->getActiveCampaigns(
-            $campaignCursor,
+        $hasMoreProfiles = $profiles->count() > $profileLimit;
+
+        /*
+        * Le profil supplémentaire sert uniquement
+        * à savoir s'il y a encore des profils.
+        */
+        $profilesForFeed = $profiles->take($profileLimit);
+
+        /*$result = $this->mergeFeed(
+            $profilesForFeed,
+            $seenCampaignIds,
             $limit
+        );*/
+
+        $campaigns = $this->campaignService->getActiveCampaigns(
+            $seenCampaignIds,
+            20
         );
 
         $result = $this->mergeFeed(
-            $profiles,
+            $profilesForFeed,
             $campaigns,
+            $seenCampaignIds,
             $limit
         );
 
-        /*
-         * Les derniers éléments réellement consommés par le merge
-         * deviennent les nouveaux curseurs.
-         */
-        $nextCursor = [
-            'profile' => $result['last_profile']
-                ? [
-                    'created_at' => $result['last_profile']->created_at?->toISOString(),
-                    'id' => $result['last_profile']->id,
-                ]
-                : $profileCursor,
+        $nextProfileCursor = $result['last_profile']
+            ? [
+                'created_at' => $result['last_profile']
+                    ->created_at
+                    ?->toISOString(),
 
-            'campaign' => $result['last_campaign']
-                ? [
-                    'priority' => $result['last_campaign']->priority,
-                    'id' => $result['last_campaign']->id,
-                ]
-                : $campaignCursor,
-        ];
+                'id' => $result['last_profile']->id,
+            ]
+            : $profileCursor;
 
-        $hasMore = (
-            $result['profile_index'] < $profiles->count()
-            || $result['campaign_index'] < $campaigns->count()
-        );
+        $hasMore = $hasMoreProfiles;
 
-        /*
-         * Si les deux sources sont épuisées, il n'y a plus rien
-         * à charger.
-         */
         if (!$hasMore) {
+
             $encodedNextCursor = null;
         } else {
-            $encodedNextCursor = $this->encodeCursor($nextCursor);
+
+            $nextCursor = [
+                'profile' => $nextProfileCursor,
+
+                'campaign_seen' => $result['seen_campaign_ids'],
+            ];
+
+            $encodedNextCursor = $this->encodeCursor(
+                $nextCursor
+            );
         }
 
         return [
@@ -170,42 +132,44 @@ class DiscoverFeedService
     }
 
     /**
-     * Mélange les profils et campagnes :
+     * Mélange :
      *
-     * 2 profils → 1 campagne
+     * P P C
+     * P P C
+     * P P C
      *
-     * et s'arrête exactement au nombre demandé.
+     * Les campagnes sont choisies dynamiquement.
      */
+    /*private function mergeFeed(
+        $profiles,
+        array $seenCampaignIds,
+        int $limit
+    ): array {*/
+
     private function mergeFeed(
         $profiles,
         $campaigns,
+        array $seenCampaignIds,
         int $limit
     ): array {
+
         $feed = [];
 
         $profileIndex = 0;
-        $campaignIndex = 0;
-
         $lastProfile = null;
-        $lastCampaign = null;
-
-        /*while (
-            count($feed) < $limit &&
-            (
-                $profileIndex < $profiles->count()
-                || $campaignIndex < $campaigns->count()
-            )
-        )*/
 
         while (
             count($feed) < $limit &&
             $profileIndex < $profiles->count()
-        )
-        {
+        ) {
+
             /*
-             * 2 profils
-             */
+         * ==========================
+         * 2 PROFILS
+         * ==========================
+         */
             for ($i = 0; $i < 2; $i++) {
+
                 if (
                     count($feed) >= $limit ||
                     $profileIndex >= $profiles->count()
@@ -221,45 +185,125 @@ class DiscoverFeedService
                 ];
 
                 $lastProfile = $profile;
+
                 $profileIndex++;
             }
 
             /*
-             * 1 campagne
+            * ==========================
+            * 1 CAMPAGNE
+            * ==========================
+            */
+            if (count($feed) < $limit && $campaigns->isNotEmpty()) {
+
+                /*
+             * On sélectionne une campagne
+             * parmi celles déjà chargées en mémoire.
              */
-            if (
-                count($feed) < $limit &&
-                $campaignIndex < $campaigns->count()
-            ) {
-                $campaign = $campaigns[$campaignIndex];
+                $selectedCampaign = $this->selectWeightedCampaign(
+                    $campaigns
+                );
 
-                $feed[] = [
-                    'type' => 'campaign',
-                    'data' => $campaign,
-                ];
+                if ($selectedCampaign) {
 
-                $lastCampaign = $campaign;
-                $campaignIndex++;
+                    $feed[] = [
+                        'type' => 'campaign',
+                        'data' => $selectedCampaign,
+                    ];
+
+                    /*
+                    * On retire la campagne sélectionnée
+                    * de la collection locale.
+                    *
+                    * Cela évite qu'elle soit sélectionnée
+                    * deux fois dans le même cycle/page.
+                    */
+                    $campaigns = $campaigns
+                        ->reject(
+                            fn($campaign) =>
+                            $campaign->id === $selectedCampaign->id
+                        )
+                        ->values();
+
+                    $seenCampaignIds[] = $selectedCampaign->id;
+                }
             }
         }
 
         return [
             'feed' => $feed,
+
             'profile_index' => $profileIndex,
-            'campaign_index' => $campaignIndex,
+
             'last_profile' => $lastProfile,
-            'last_campaign' => $lastCampaign,
+
+            'seen_campaign_ids' => array_values(
+                array_unique($seenCampaignIds)
+            ),
         ];
     }
 
+    private function selectWeightedCampaign($campaigns)
+    {
+        if ($campaigns->isEmpty()) {
+            return null;
+        }
+
+        $totalWeight = 0;
+
+        foreach ($campaigns as $campaign) {
+            $totalWeight += $this->calculateCampaignWeight($campaign);
+        }
+
+        if ($totalWeight <= 0) {
+            return $campaigns->random();
+        }
+
+        $random = mt_rand(1, $totalWeight);
+
+        $currentWeight = 0;
+
+        foreach ($campaigns as $campaign) {
+
+            $currentWeight += $this->calculateCampaignWeight(
+                $campaign
+            );
+
+            if ($random <= $currentWeight) {
+                return $campaign;
+            }
+        }
+
+        return $campaigns->last();
+    }
+
+    private function calculateCampaignWeight($campaign): int
+    {
+        $views = (int) ($campaign->views_count ?? 0);
+
+        $priority = max(
+            1,
+            (int) ($campaign->priority ?? 1)
+        );
+
+        $deliveryWeight = max(
+            1,
+            (int) floor(1000 / ($views + 1))
+        );
+
+        return $deliveryWeight * $priority;
+    }
+
     /**
-     * Encoder le curseur en base64 URL-safe.
+     * Encoder le cursor en Base64 URL-safe.
      */
     private function encodeCursor(array $cursor): string
     {
         return rtrim(
             strtr(
-                base64_encode(json_encode($cursor)),
+                base64_encode(
+                    json_encode($cursor)
+                ),
                 '+/',
                 '-_'
             ),
@@ -268,7 +312,7 @@ class DiscoverFeedService
     }
 
     /**
-     * Décoder le curseur.
+     * Décoder le cursor.
      */
     private function decodeCursor(?string $cursor): ?array
     {
@@ -277,14 +321,22 @@ class DiscoverFeedService
         }
 
         try {
+
             $padding = strlen($cursor) % 4;
 
             if ($padding > 0) {
-                $cursor .= str_repeat('=', 4 - $padding);
+                $cursor .= str_repeat(
+                    '=',
+                    4 - $padding
+                );
             }
 
             $decoded = base64_decode(
-                strtr($cursor, '-_', '+/'),
+                strtr(
+                    $cursor,
+                    '-_',
+                    '+/'
+                ),
                 true
             );
 
@@ -292,10 +344,16 @@ class DiscoverFeedService
                 return null;
             }
 
-            $data = json_decode($decoded, true);
+            $data = json_decode(
+                $decoded,
+                true
+            );
 
-            return is_array($data) ? $data : null;
+            return is_array($data)
+                ? $data
+                : null;
         } catch (\Throwable $e) {
+
             return null;
         }
     }
