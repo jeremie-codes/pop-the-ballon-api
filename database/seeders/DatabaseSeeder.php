@@ -16,43 +16,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        /*User::updateOrCreate(
-            ['email' => 'jeremie@test.com'],
+        User::updateOrCreate(
+            ['email' => 'admin@pop.cloud'],
             [
-                'first_name' => 'Jeremie',
-                'last_name' => 'Mianda',
-                'username' => 'jeremie',
-                'phone' => '243810000001',
-                'birth_date' => '1998-01-15',
-                'gender' => 'male',
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'username' => 'admin',
+                'role' => 'admin',
                 'city' => 'Kinshasa',
                 'country' => 'RDC',
-                'intention' => 'serious',
-                'bio' => 'Compte de test 1',
+                'bio' => 'Compte administrateur',
                 'verified' => true,
+                'is_staff' => true,
                 'email_verified_at' => now(),
-                'password' => Hash::make('password'),
+                'password' => Hash::make('@admin123'),
             ]
         );
 
         User::updateOrCreate(
-            ['email' => 'sarah@test.com'],
+            ['email' => 'support@pop.cloud'],
             [
-                'first_name' => 'Sarah',
-                'last_name' => 'Johnson',
-                'username' => 'sarah',
-                'phone' => '243810000002',
-                'birth_date' => '1999-05-20',
-                'gender' => 'female',
+                'first_name' => 'Equipe',
+                'last_name' => 'PopTheBallon',
+                'username' => 'support',
+                'role' => 'support',
                 'city' => 'Kinshasa',
                 'country' => 'RDC',
-                'intention' => 'friendship',
-                'bio' => 'Compte de test 2',
+                'bio' => 'Compte support technique',
                 'verified' => true,
+                'is_staff' => true,
                 'email_verified_at' => now(),
-                'password' => Hash::make('password'),
+                'password' => Hash::make('@admin123'),
             ]
-        );*/
+        );
 
     }
 }
