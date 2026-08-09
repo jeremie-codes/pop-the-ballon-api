@@ -18,7 +18,7 @@ return new class extends Migration
                 'admin',
                 'support',
                 'moderator',
-            ])->default('user')->change();
+            ])->default('user');
         });
     }
 
