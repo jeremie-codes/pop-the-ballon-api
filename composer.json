@@ -9,9 +9,11 @@
         "php": "^8.3",
         "aoding9/compreface-laravel-sdk": "*",
         "filament/filament": "~5.0",
+        "google/apiclient": "*",
         "laravel/framework": "^13.8",
         "laravel/reverb": "^1.0",
         "laravel/sanctum": "*",
+        "laravel/socialite": "*",
         "laravel/tinker": "^3.0"
     },
     "require-dev": {

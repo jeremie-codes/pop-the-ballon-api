@@ -11,11 +11,13 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\VerificationPaymentController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Laravel\Socialite\Facades\Socialite;
 
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -26,6 +28,8 @@ Route::prefix('auth')->group(function () {
     Route::post('password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
 
     Route::post('delete/account', [AuthController::class, 'deleteAccount']);
+
+    Route::post('google/exchange', [GoogleAuthController::class, 'exchange']);
 });
 
 Route::prefix('otp')->group(function () {

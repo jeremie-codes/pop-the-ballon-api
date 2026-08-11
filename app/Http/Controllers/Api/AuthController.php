@@ -28,6 +28,7 @@ class AuthController extends Controller
                 ->whereRaw('LOWER(email) = ?', [$identifier])
                 ->where('is_visible', true)
                 ->where('role', '!=', 'admin')
+                ->where('is_staff', '!=', true)
                 ->orWhereRaw('LOWER(username) = ?', [$identifier])
                 ->orWhere('phone', $data['identifier'])
                 ->first();
@@ -47,7 +48,7 @@ class AuthController extends Controller
             $user->last_seen_at = now();
             $user->save();
 
-            return response()->json($this->authResponse($user));
+            return response()->json($user->authResponse());
         } catch (\Throwable $e) {
             logger()->error('AuthController.login error', [
                 'error' => $e->getMessage(),
@@ -142,7 +143,7 @@ class AuthController extends Controller
                 return $user->load(['interests', 'photos']);
             });
 
-            return response()->json($this->authResponse($user), 201);
+            return response()->json($user->authResponse(), 201);
         } catch (\Throwable $e) {
             logger()->error('AuthController.register error', [
                 'error' => $e->getMessage(),
@@ -417,45 +418,6 @@ class AuthController extends Controller
         }
     }
 
-    private function authResponse(User $user): array
-    {
-        $token = $user->createToken('mobile', ['*'], now()->addDays(30));
-
-        return [
-            'code' => 'auth-ok',
-            'token' => $token->plainTextToken,
-            'expoToken' => $user->devices()->latest('last_used_at')->value('expo_token') ?? null,
-            'expire_in' => 60 * 60 * 24 * 30,
-            'merchant' => '',
-            'shop' => '',
-            'is_merchant' => false,
-            'is_super_merchant' => false,
-            'user' => [
-                'id' => (string) $user->id,
-                'firstName' => $user->first_name,
-                'lastName' => $user->last_name,
-                'username' => $user->username,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'birthDate' => optional($user->birth_date)->toDateString(),
-                'gender' => $user->gender,
-                'city' => $user->city,
-                'country' => $user->country,
-                'intention' => $user->intention,
-                'bio' => $user->bio,
-                'avatar' => optional($user->photos->first())->path,
-                'pictures' => $user->photos->map(fn($photo) => [
-                    'id' => (string) $photo->id,
-                    'name' => $photo->path,
-                    'isPrimary' => (bool) $photo->is_primary,
-                ])->values(),
-                'age' => $user->age(),
-                'verified' => (bool) $user->verified,
-                'messageCredits' => MessageCredit::query()->where('user_id', $user->id)->get()->sum('available_messages'),
-                'interests' => $user->interests->pluck('name')->values(),
-            ],
-        ];
-    }
 
     public function deleteAccount(Request $request)
     {

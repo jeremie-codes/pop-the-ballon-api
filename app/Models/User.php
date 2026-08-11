@@ -21,6 +21,7 @@ class User extends Authenticatable implements FilamentUser, HasName
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
+        'google_id',
         'expo_token',
         'first_name',
         'last_name',
@@ -142,6 +143,46 @@ class User extends Authenticatable implements FilamentUser, HasName
                 $query->where('user_one_id', $this->id)
                     ->orWhere('user_two_id', $this->id);
             });
+    }
+
+    public function authResponse(): array
+    {
+        $token = $this->createToken('mobile', ['*'], now()->addDays(30));
+
+        return [
+            'code' => 'auth-ok',
+            'token' => $token->plainTextToken,
+            'expoToken' => $this->devices()->latest('last_used_at')->value('expo_token') ?? null,
+            'expire_in' => 60 * 60 * 24 * 30,
+            'merchant' => '',
+            'shop' => '',
+            'is_merchant' => false,
+            'is_super_merchant' => false,
+            'user' => [
+                'id' => (string) $this->id,
+                'firstName' => $this->first_name,
+                'lastName' => $this->last_name,
+                'username' => $this->username,
+                'phone' => $this->phone,
+                'email' => $this->email,
+                'birthDate' => optional($this->birth_date)->toDateString(),
+                'gender' => $this->gender,
+                'city' => $this->city,
+                'country' => $this->country,
+                'intention' => $this->intention,
+                'bio' => $this->bio,
+                'avatar' => optional($this->photos->first())->path,
+                'pictures' => $this->photos->map(fn($photo) => [
+                    'id' => (string) $photo->id,
+                    'name' => $photo->path,
+                    'isPrimary' => (bool) $photo->is_primary,
+                ])->values(),
+                'age' => $this->age(),
+                'verified' => (bool) $this->verified,
+                'messageCredits' => MessageCredit::query()->where('user_id', $this->id)->get()->sum('available_messages'),
+                'interests' => $this->interests->pluck('name')->values(),
+            ],
+        ];
     }
 
     public function canAccessPanel(Panel $panel): bool
