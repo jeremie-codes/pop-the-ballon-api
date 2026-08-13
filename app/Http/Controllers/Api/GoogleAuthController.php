@@ -227,7 +227,7 @@ class GoogleAuthController extends Controller
                     'first_name' => $payload['first_name'],
                     'last_name' => $payload['last_name'],
                     'avatar' => $payload['avatar'],
-                ]),
+                ], 30),
             ]);
         }
 
@@ -240,14 +240,16 @@ class GoogleAuthController extends Controller
     /**
      * Génère un code temporaire à usage unique.
      */
-    private function createExchangeCode(array $payload): string
-    {
+    private function createExchangeCode(
+        array $payload,
+        int $minutes = 5
+    ): string {
         $code = Str::random(64);
 
         Cache::put(
             'google_oauth_exchange:' . hash('sha256', $code),
             $payload,
-            now()->addMinutes(5)
+            now()->addMinutes($minutes)
         );
 
         return $code;
@@ -277,8 +279,7 @@ class GoogleAuthController extends Controller
             'registration_token' => ['required', 'string'],
         ]);
 
-        $cacheKey = 'google_oauth_exchange:' .
-            hash('sha256', $data['registration_token']);
+        $cacheKey = 'google_oauth_exchange:' . hash('sha256', $data['registration_token']);
 
         $payload = Cache::get($cacheKey);
 
@@ -315,17 +316,17 @@ class GoogleAuthController extends Controller
     {
         try {
             $data = $request->validate([
-                'registration_token' => [ 'required', 'string',],
-                'username' => ['required','string','max:255','unique:users,username',],
-                'phone' => ['required','string','max:30','unique:users,phone',],
-                'birth_date' => ['required','date',],
-                'gender' => ['required','string','max:50',],
-                'city' => ['required','string','max:120',],
-                'country' => ['required','string','max:120',],
-                'intention' => ['required','string','max:255',],
-                'bio' => ['nullable','string',],
-                'interests' => ['nullable','array',],
-                'interests.*' => ['string','max:80',],
+                'registration_token' => ['required', 'string',],
+                'username' => ['required', 'string', 'max:255', 'unique:users,username',],
+                'phone' => ['required', 'string', 'max:30', 'unique:users,phone',],
+                'birth_date' => ['required', 'date',],
+                'gender' => ['required', 'string', 'max:50',],
+                'city' => ['required', 'string', 'max:120',],
+                'country' => ['required', 'string', 'max:120',],
+                'intention' => ['required', 'string', 'max:255',],
+                'bio' => ['nullable', 'string',],
+                'interests' => ['nullable', 'array',],
+                'interests.*' => ['string', 'max:80',],
             ]);
 
             $cacheKey =
@@ -346,7 +347,7 @@ class GoogleAuthController extends Controller
                     'success' => false,
                     'code' => 'invalid_or_expired_registration',
                     'message' =>
-                        'La session d’inscription Google est invalide ou expirée.',
+                    'La session d’inscription Google est invalide ou expirée.',
                 ], 422);
             }
 
@@ -358,7 +359,7 @@ class GoogleAuthController extends Controller
                     'success' => false,
                     'code' => 'invalid_registration_token',
                     'message' =>
-                        'Le token d’inscription Google est invalide.',
+                    'Le token d’inscription Google est invalide.',
                 ], 422);
             }
 
@@ -379,8 +380,7 @@ class GoogleAuthController extends Controller
                 return response()->json([
                     'success' => false,
                     'code' => 'account_already_exists',
-                    'message' =>
-                        'Un compte existe déjà avec ce compte Google.',
+                    'message' => 'Un compte existe déjà avec ce compte Google.',
                 ], 409);
             }
 
@@ -430,7 +430,6 @@ class GoogleAuthController extends Controller
                 $user->authResponse(),
                 201
             );
-
         } catch (\Throwable $e) {
 
             logger()->error(
@@ -444,10 +443,8 @@ class GoogleAuthController extends Controller
             return response()->json([
                 'success' => false,
                 'code' => 'google_registration_failed',
-                'message' =>
-                    'Impossible de terminer votre inscription.',
+                'message' => 'Impossible de terminer votre inscription.',
             ], 500);
         }
     }
-    
 }
