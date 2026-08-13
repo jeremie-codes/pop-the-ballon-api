@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -267,4 +267,187 @@ class GoogleAuthController extends Controller
         );
     }
 
+    /**
+     * Récupère les informations temporaires
+     * d'une inscription Google.
+     */
+    public function registration(Request $request)
+    {
+        $data = $request->validate([
+            'registration_token' => ['required', 'string'],
+        ]);
+
+        $cacheKey = 'google_oauth_exchange:' .
+            hash('sha256', $data['registration_token']);
+
+        $payload = Cache::get($cacheKey);
+
+        if (!$payload) {
+            return response()->json([
+                'success' => false,
+                'code' => 'invalid_or_expired_registration',
+                'message' => 'La session d’inscription Google est invalide ou expirée.',
+            ], 422);
+        }
+
+        if (($payload['type'] ?? null) !== 'google_registration') {
+            return response()->json([
+                'success' => false,
+                'code' => 'invalid_registration_token',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'google' => [
+                'email' => $payload['email'],
+                'first_name' => $payload['first_name'],
+                'last_name' => $payload['last_name'],
+                'avatar' => $payload['avatar'],
+            ],
+        ]);
+    }
+
+    /**
+     * Termine l'inscription commencée avec Google.
+     */
+    public function completeRegistration(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'registration_token' => [ 'required', 'string',],
+                'username' => ['required','string','max:255','unique:users,username',],
+                'phone' => ['required','string','max:30','unique:users,phone',],
+                'birth_date' => ['required','date',],
+                'gender' => ['required','string','max:50',],
+                'city' => ['required','string','max:120',],
+                'country' => ['required','string','max:120',],
+                'intention' => ['required','string','max:255',],
+                'bio' => ['nullable','string',],
+                'interests' => ['nullable','array',],
+                'interests.*' => ['string','max:80',],
+            ]);
+
+            $cacheKey =
+                'google_oauth_exchange:' . hash('sha256', $data['registration_token']);
+
+            /*
+            * IMPORTANT :
+            *
+            * pull() signifie que le token est consommé.
+            *
+            * Donc une finalisation réussie ou tentée
+            * avec ce token ne pourra pas être rejouée.
+            */
+            $payload = Cache::pull($cacheKey);
+
+            if (!$payload) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 'invalid_or_expired_registration',
+                    'message' =>
+                        'La session d’inscription Google est invalide ou expirée.',
+                ], 422);
+            }
+
+            if (
+                ($payload['type'] ?? null)
+                !== 'google_registration'
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 'invalid_registration_token',
+                    'message' =>
+                        'Le token d’inscription Google est invalide.',
+                ], 422);
+            }
+
+            /*
+            * Double sécurité :
+            * on vérifie que Google/email n'a pas déjà
+            * été enregistré entre-temps.
+            */
+            $existingUser = User::query()
+                ->where('google_id', $payload['google_id'])
+                ->orWhereRaw(
+                    'LOWER(email) = ?',
+                    [Str::lower($payload['email'])]
+                )
+                ->first();
+
+            if ($existingUser) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 'account_already_exists',
+                    'message' =>
+                        'Un compte existe déjà avec ce compte Google.',
+                ], 409);
+            }
+
+            $user = DB::transaction(function () use (
+                $data,
+                $payload
+            ) {
+                $user = User::query()->create([
+                    /*
+                    * Données provenant de Google
+                    */
+                    'first_name' => $payload['first_name'],
+                    'last_name' => $payload['last_name'],
+                    'email' => $payload['email'],
+                    'google_id' => $payload['google_id'],
+                    /*
+                    * Données complétées dans l'application
+                    */
+                    'username' => Str::lower(trim($data['username'])),
+                    'phone' =>                    $data['phone'],
+                    'password' => null,
+                    'birth_date' => $data['birth_date'],
+                    'gender' => $data['gender'],
+                    'city' => $data['city'],
+                    'country' => $data['country'],
+                    'intention' => $data['intention'],
+                    'bio' => $data['bio'] ?? null,
+                    'last_seen_at' => now(),
+                ]);
+
+                foreach (
+                    $data['interests'] ?? []
+                    as $interest
+                ) {
+                    $user->interests()->create([
+                        'name' => $interest,
+                    ]);
+                }
+
+                return $user->load([
+                    'interests',
+                    'photos',
+                ]);
+            });
+
+            return response()->json(
+                $user->authResponse(),
+                201
+            );
+
+        } catch (\Throwable $e) {
+
+            logger()->error(
+                'Google complete registration error',
+                [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]
+            );
+
+            return response()->json([
+                'success' => false,
+                'code' => 'google_registration_failed',
+                'message' =>
+                    'Impossible de terminer votre inscription.',
+            ], 500);
+        }
+    }
+    
 }

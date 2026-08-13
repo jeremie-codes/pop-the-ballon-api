@@ -30,6 +30,9 @@ Route::prefix('auth')->group(function () {
     Route::post('delete/account', [AuthController::class, 'deleteAccount']);
 
     Route::post('google/exchange', [GoogleAuthController::class, 'exchange']);
+    Route::post('google/complete', [GoogleAuthController::class, 'completeRegistration']);
+    
+    //Route::post('/registration', [GoogleAuthController::class, 'registration']);
 });
 
 Route::prefix('otp')->group(function () {
