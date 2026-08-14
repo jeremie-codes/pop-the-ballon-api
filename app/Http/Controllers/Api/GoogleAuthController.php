@@ -12,6 +12,7 @@ use Laravel\Socialite\Facades\Socialite;
 
 class GoogleAuthController extends Controller
 {
+
     /**
      * Redirige l'utilisateur vers Google.
      */
@@ -19,6 +20,7 @@ class GoogleAuthController extends Controller
     {
         return Socialite::driver('google')->redirect();
     }
+
 
     /**
      * Google revient ici après authentification.
@@ -155,6 +157,7 @@ class GoogleAuthController extends Controller
         }
     }
 
+
     /**
      * Transforme le code temporaire en authentification Sanctum.
      */
@@ -237,6 +240,7 @@ class GoogleAuthController extends Controller
         ], 422);
     }
 
+
     /**
      * Génère un code temporaire à usage unique.
      */
@@ -255,6 +259,7 @@ class GoogleAuthController extends Controller
         return $code;
     }
 
+
     /**
      * Redirige vers l'application Expo.
      */
@@ -269,45 +274,6 @@ class GoogleAuthController extends Controller
         );
     }
 
-    /**
-     * Récupère les informations temporaires
-     * d'une inscription Google.
-     */
-    public function registration(Request $request)
-    {
-        $data = $request->validate([
-            'registration_token' => ['required', 'string'],
-        ]);
-
-        $cacheKey = 'google_oauth_exchange:' . hash('sha256', $data['registration_token']);
-
-        $payload = Cache::get($cacheKey);
-
-        if (!$payload) {
-            return response()->json([
-                'success' => false,
-                'code' => 'invalid_or_expired_registration',
-                'message' => 'La session d’inscription Google est invalide ou expirée.',
-            ], 422);
-        }
-
-        if (($payload['type'] ?? null) !== 'google_registration') {
-            return response()->json([
-                'success' => false,
-                'code' => 'invalid_registration_token',
-            ], 422);
-        }
-
-        return response()->json([
-            'success' => true,
-            'google' => [
-                'email' => $payload['email'],
-                'first_name' => $payload['first_name'],
-                'last_name' => $payload['last_name'],
-                'avatar' => $payload['avatar'],
-            ],
-        ]);
-    }
 
     /**
      * Termine l'inscription commencée avec Google.
@@ -329,8 +295,7 @@ class GoogleAuthController extends Controller
                 'interests.*' => ['string', 'max:80',],
             ]);
 
-            $cacheKey =
-                'google_oauth_exchange:' . hash('sha256', $data['registration_token']);
+            $cacheKey = 'google_oauth_exchange:' . hash('sha256', $data['registration_token']);
 
             /*
             * IMPORTANT :

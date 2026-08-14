@@ -17,13 +17,7 @@ use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
-    /*public function discoverFeed(Request $request)
-    {
-        $feed = app(DiscoverFeedService::class)->build($request->user('sanctum'));
-        return response()->json(
-            DiscoverFeedResource::collection($feed)->resolve()
-        );
-    }*/
+
 
     public function discoverFeed(Request $request)
     {
