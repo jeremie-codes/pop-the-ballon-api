@@ -160,7 +160,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/broadcasting/auth', function (Request $request) {
 
-        \Log::info('🔐 REVERB AUTH REQUEST', [
+        logger()->info('🔐 REVERB AUTH REQUEST', [
             'user_id' => $request->user()?->id,
             'channel_name' => $request->input('channel_name'),
             'socket_id' => $request->input('socket_id'),
@@ -168,17 +168,18 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
 
         try {
+
             $response = Broadcast::auth($request);
 
-            \Log::info('✅ REVERB AUTH RESPONSE', [
-                'status' => $response->status(),
-                'content' => $response->getContent(),
+            logger()->info('✅ REVERB AUTH RESPONSE', [
+                'type' => gettype($response),
+                'response' => $response,
             ]);
 
             return $response;
         } catch (\Throwable $e) {
 
-            \Log::error('❌ REVERB AUTH ERROR', [
+            logger()->error('❌ REVERB AUTH ERROR', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
