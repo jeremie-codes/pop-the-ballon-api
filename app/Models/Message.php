@@ -17,12 +17,14 @@ class Message extends Model
         'attachment_size',
         'attachment_mime',
         'read_at',
+        'deleted_for_everyone_at',
         'is_broadcast',
     ];
 
     protected $casts = [
         'type' => MessageType::class,
         'read_at' => 'datetime',
+        'deleted_for_everyone_at' => 'datetime',
         'attachment_duration' => 'integer',
         'attachment_size' => 'integer',
         'is_broadcast' => 'boolean',
@@ -36,5 +38,10 @@ class Message extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function deletions()
+    {
+        return $this->hasMany(MessageDeletion::class);
     }
 }

@@ -27,6 +27,11 @@ class Conversation extends Model
         //return $this->hasMany(Message::class)->latest();
     }
 
+    public function deletions()
+    {
+        return $this->hasMany(ConversationDeletion::class);
+    }
+
     public function lastMessage()
     {
         return $this->hasOne(Message::class)->latestOfMany();

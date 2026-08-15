@@ -31,7 +31,7 @@ Route::prefix('auth')->group(function () {
 
     Route::post('google/exchange', [GoogleAuthController::class, 'exchange']);
     Route::post('google/complete', [GoogleAuthController::class, 'completeRegistration']);
-    
+
     //Route::post('/registration', [GoogleAuthController::class, 'registration']);
 });
 
@@ -114,6 +114,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('conversations/{conversation}', [ConversationController::class, 'show']);
     Route::post('conversations/{conversation}/messages', [ConversationController::class, 'storeMessage']);
     Route::post('conversations/{conversation}/read', [ConversationController::class, 'markAsRead']);
+    //Route::delete('/conversations/{conversation}/messages/{message}', [ConversationController::class, 'deleteMessage']);
+    //Route::delete('/conversations/{conversation}', [ConversationController::class, 'deleteConversation']);
 
     /*
     |--------------------------------------------------------------------------
