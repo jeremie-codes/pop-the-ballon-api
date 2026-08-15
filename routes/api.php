@@ -24,7 +24,7 @@ Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::get('check-identity', [AuthController::class, 'checkIdentity']);
     Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->name('password.forgot');
-    Route::post('/verify-reset-otp', [AuthController::class,'verifyResetOtp']);
+    Route::post('/verify-reset-otp', [AuthController::class, 'verifyResetOtp']);
     Route::post('password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
 
     Route::post('delete/account', [AuthController::class, 'deleteAccount']);
@@ -159,7 +159,33 @@ Route::middleware('auth:sanctum')->group(function () {
     */
 
     Route::post('/broadcasting/auth', function (Request $request) {
-        return Broadcast::auth($request);
+
+        \Log::info('🔐 REVERB AUTH REQUEST', [
+            'user_id' => $request->user()?->id,
+            'channel_name' => $request->input('channel_name'),
+            'socket_id' => $request->input('socket_id'),
+            'has_authorization' => $request->hasHeader('Authorization'),
+        ]);
+
+        try {
+            $response = Broadcast::auth($request);
+
+            \Log::info('✅ REVERB AUTH RESPONSE', [
+                'status' => $response->status(),
+                'content' => $response->getContent(),
+            ]);
+
+            return $response;
+        } catch (\Throwable $e) {
+
+            \Log::error('❌ REVERB AUTH ERROR', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            throw $e;
+        }
     });
 
     /*
@@ -178,7 +204,6 @@ Route::middleware('auth:sanctum')->group(function () {
     */
 
     Route::post('/verification-payments', [VerificationPaymentController::class, 'initiate']);
-
 });
 
 Route::post('/payments/callback/{reference}', [MessageBundleController::class, 'callback'])->name('payments.callback');
@@ -187,10 +212,10 @@ Route::get('/payments/canceled/{reference}', [MessageBundleController::class, 'c
 Route::get('/payments/declined/{reference}', [MessageBundleController::class, 'decline'])->name('payments.declined');
 Route::get('/payments/status', [MessageBundleController::class, 'status'])->name('payments.check');
 
-Route::post('/verification/callback/{reference}', [VerificationPaymentController::class,'callback'])->name('verification.callback');
-Route::get('/verification/success/{reference}', [VerificationPaymentController::class,'success'])->name('verification.success');
-Route::get('/verification/cancel/{reference}', [VerificationPaymentController::class,'cancel'])->name('verification.cancel');
-Route::get('/verification/decline/{reference}', [VerificationPaymentController::class,'decline'])->name('verification.decline');
+Route::post('/verification/callback/{reference}', [VerificationPaymentController::class, 'callback'])->name('verification.callback');
+Route::get('/verification/success/{reference}', [VerificationPaymentController::class, 'success'])->name('verification.success');
+Route::get('/verification/cancel/{reference}', [VerificationPaymentController::class, 'cancel'])->name('verification.cancel');
+Route::get('/verification/decline/{reference}', [VerificationPaymentController::class, 'decline'])->name('verification.decline');
 Route::get('/verification/status', [VerificationPaymentController::class, 'status'])->name('Verification.check');
 
 /*
