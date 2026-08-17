@@ -8,16 +8,19 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 
 class MessageCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public Message $message,
-        public ?string $clientId = null
-    ) {}
+    public Message $message;
+    public ?string $clientId;
+
+    public function __construct(Message $message, ?string $clientId = null)
+    {
+        $this->message = $message;
+        $this->clientId = $clientId;
+    }
 
     public function broadcastOn(): array
     {

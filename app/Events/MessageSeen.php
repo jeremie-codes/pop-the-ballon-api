@@ -12,11 +12,16 @@ class MessageSeen implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public int $conversationId,
-        public int $readerId,
-        public array $messageIds,
-    ) {}
+    public int $conversationId;
+    public int $readerId;
+    public array $messageIds;
+
+    public function __construct(int $conversationId, int $readerId, array $messageIds)
+    {
+        $this->conversationId = $conversationId;
+        $this->readerId = $readerId;
+        $this->messageIds = $messageIds;
+    }
 
     public function broadcastOn(): array
     {

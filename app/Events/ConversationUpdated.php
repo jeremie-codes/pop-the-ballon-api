@@ -13,11 +13,16 @@ class ConversationUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public Message $message,
-        public int $userId,
-        public bool $incrementUnread,
-    ) {}
+    public Message $message;
+    public int $userId;
+    public bool $incrementUnread;
+
+    public function __construct(Message $message, int $userId, bool $incrementUnread)
+    {
+        $this->message = $message;
+        $this->userId = $userId;
+        $this->incrementUnread = $incrementUnread;
+    }
 
     public function broadcastOn(): array
     {

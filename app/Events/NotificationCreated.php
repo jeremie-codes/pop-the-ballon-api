@@ -13,9 +13,12 @@ class NotificationCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public AppNotification $notification
-    ) {}
+    public AppNotification $notification;
+
+    public function __construct(AppNotification $notification)
+    {
+        $this->notification = $notification;
+    }
 
     public function broadcastOn(): array
     {

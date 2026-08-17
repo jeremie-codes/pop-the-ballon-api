@@ -10,7 +10,7 @@ Route::get('/', function () {
     ];
 });
 
-Route::get('/google-mobile-result', function () {
+Route::get('/auth-google-mobile-result', function () {
     return view('auth');
 })->name('auth.google-mobile-result');
 

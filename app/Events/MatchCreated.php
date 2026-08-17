@@ -14,11 +14,16 @@ class MatchCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public int $userId,
-        public User $matchedUser,
-        public Conversation $conversation,
-    ) {}
+    public int $userId;
+    public User $matchedUser;
+    public Conversation $conversation;
+
+    public function __construct(int $userId, User $matchedUser, Conversation $conversation)
+    {
+        $this->userId = $userId;
+        $this->matchedUser = $matchedUser;
+        $this->conversation = $conversation;
+    }
 
     public function broadcastOn(): array
     {
