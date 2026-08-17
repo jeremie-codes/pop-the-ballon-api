@@ -266,7 +266,7 @@ class GoogleAuthController extends Controller
     /**
      * Redirige vers l'application Expo.
      */
-    private function redirectToMobile(array $params)
+    /*private function redirectToMobile(array $params)
     {
         $query = http_build_query($params);
 
@@ -275,6 +275,15 @@ class GoogleAuthController extends Controller
         return redirect(
             'poptheballon://auth/google?' . $query
         );
+    }*/
+
+    private function redirectToMobile(array $params)
+    {
+        return response()->view('auth.google-mobile-result', [
+            'success' => $params['success'] ?? false,
+            'code' => $params['code'] ?? null,
+            'next' => $params['next'] ?? null,
+        ]);
     }
 
 
@@ -296,17 +305,17 @@ class GoogleAuthController extends Controller
 
         $data = $request->validate(
             [
-                'registration_token' => ['required','string'],
-                'username' => ['required','string','max:30','regex:/^[a-zA-Z0-9_]+$/',],
-                'phone' => ['required','string','max:30'],
-                'birth_date' => ['required','date'],
-                'gender' => ['required','string','max:50',],
-                'city' => ['required','string','max:120',],
-                'country' => ['required','string','max:120'],
-                'intention' => ['required','string','max:255'],
-                'bio' => ['nullable','string'],
-                'interests' => ['nullable','array'],
-                'interests.*' => ['string','max:80'],
+                'registration_token' => ['required', 'string'],
+                'username' => ['required', 'string', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',],
+                'phone' => ['required', 'string', 'max:30'],
+                'birth_date' => ['required', 'date'],
+                'gender' => ['required', 'string', 'max:50',],
+                'city' => ['required', 'string', 'max:120',],
+                'country' => ['required', 'string', 'max:120'],
+                'intention' => ['required', 'string', 'max:255'],
+                'bio' => ['nullable', 'string'],
+                'interests' => ['nullable', 'array'],
+                'interests.*' => ['string', 'max:80'],
             ],
             [
                 'registration_token.required' => 'La session d’inscription Google est invalide.',
