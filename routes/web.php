@@ -18,3 +18,12 @@ Route::prefix('auth')->group(function () {
     Route::get('/google/redirect', [GoogleAuthController::class, 'redirect']);
     Route::get('/google/callback', [GoogleAuthController::class, 'callback']);
 });
+
+Route::get('/support', function () {
+    return view('support');
+})->name('support');
+
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('privacy');
+
