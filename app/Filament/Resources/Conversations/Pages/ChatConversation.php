@@ -9,6 +9,7 @@ use App\Models\Message;
 use App\Services\ExpoNotificationService;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
+use Illuminate\Support\Facades\Auth;
 use Livewire\WithFileUploads;
 
 class ChatConversation extends Page
@@ -74,7 +75,19 @@ class ChatConversation extends Page
             );
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
+
+        abort_unless(
+            $this->record->type === 'support',
+            403,
+            'Cette conversation n\'est pas une conversation support.'
+        );
+
+        abort_unless(
+            $user->is_staff && $user->role === 'support',
+            403,
+            'Vous n\'êtes pas autorisé à répondre aux conversations support.'
+        );
 
         $message = Message::create([
             'conversation_id' => $this->record->id,
@@ -104,9 +117,9 @@ class ChatConversation extends Page
         // Destinataire : mettre à jour son Inbox
         // et incrémenter unread
         ConversationUpdated::dispatch(
-            message: $message,
-            userId: $otherUser->id,
-            incrementUnread: true,
+            $message,
+            $otherUser->id,
+            true,
         );
 
         foreach ($otherUser->devices as $device) {
