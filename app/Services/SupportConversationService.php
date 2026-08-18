@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Conversation;
 use App\Models\Message;
+use Illuminate\Support\Facades\Auth;
 
 class SupportConversationService
 {
@@ -37,6 +38,7 @@ class SupportConversationService
     {
 
         $support = $this->getSupportUser();
+        $currentUserId = Auth::check() ? Auth::id() : null;
 
         $hasSupportMessage = $conversation->messages()
             ->where('sender_id', $support->id)
@@ -56,16 +58,16 @@ class SupportConversationService
             'is_staff' => (bool) $support->is_staff,
             'name' => $support->full_name,
             'avatar' => $support->avatar ? asset('storage/' . $support->avatar) : '',
-            'message' => $lastMessage?->body ?? '',
+            'message' => $lastMessage ? $lastMessage->body : '',
             'time' => $conversation->last_message_at ? $conversation->last_message_at->diffForHumans() : '',
             'unread' => $conversation->messages
             ->filter(
-                fn(Message $message) => $message->sender_id !== auth()->id() && $message->read_at === null
+                fn(Message $message) => $message->sender_id !== $currentUserId && $message->read_at === null
             )->count(),
             'matched' => false,
             'lastMessageAt' => optional($conversation->last_message_at)->toISOString(),
-            'senderId' => $lastMessage?->sender_id ? (string)$lastMessage->sender_id : null,
-            'read' => (bool) $lastMessage?->read_at,
+            'senderId' => $lastMessage && $lastMessage->sender_id !== null ? (string) $lastMessage->sender_id : null,
+            'read' => $lastMessage ? $lastMessage->read_at !== null : false,
             'messages' => $conversation
                 ->messages()
                 ->oldest()

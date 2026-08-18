@@ -62,8 +62,10 @@ class SupportRequestController extends Controller
                 'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             ]);
 
+            $user = $request->user();
+
             SupportRequest::query()->create([
-                'user_id' => $request->user()?->id,
+                'user_id' => $user ? $user->id : null,
                 ...$data,
             ]);
 
