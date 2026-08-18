@@ -16,6 +16,7 @@ use App\Services\ExpoNotificationService;
 use Illuminate\Http\Request;
 use App\Events\ConversationSeen;
 use App\Enums\MessageType;
+use App\Services\SupportConversationService;
 
 class ConversationController extends Controller
 {
@@ -49,42 +50,51 @@ class ConversationController extends Controller
         return response()->json($matches);
     }
 
-    public function index(Request $request)
-    {
+    public function index(
+        Request $request,
+        SupportConversationService $supportService
+    ) {
         $user = $request->user('sanctum');
+
+        $support = $supportService->getSupportUser();
 
         return response()->json(
             Conversation::query()
                 ->with([
                     'userOne.photos',
                     'userTwo.photos',
-                    'messages' => fn($query) => $query->latest()->limit(1),
+                    'messages' => fn($query) => $query->latest(),
                 ])
                 ->where(function ($query) use ($user) {
-                    $query->where('user_one_id', $user->id)
+                    $query
+                        ->where('user_one_id', $user->id)
                         ->orWhere('user_two_id', $user->id);
+                })
+                ->where(function ($query) use ($support) {
+
+                    // Conversations normales
+                    $query->where('type', '!=', 'support')
+
+                        // Conversations support :
+                        // seulement si le support a répondu
+                        ->orWhere(function ($query) use ($support) {
+                            $query
+                                ->where('type', 'support')
+                                ->whereHas('messages', function ($messageQuery) use ($support) {
+                                    $messageQuery->where(
+                                        'sender_id',
+                                        $support->id
+                                    );
+                                });
+                        });
                 })
                 ->latest('last_message_at')
                 ->get()
-                /*->filter(function (Conversation $conversation) use ($user) {
-
-                    $otherUser = $conversation->user_one_id == $user->id
-                        ? $conversation->userTwo
-                        : $conversation->userOne;
-
-                    // Conversation normale
-                    if (!$otherUser->is_staff) {
-                        return true;
-                    }
-
-                    // Conversation support :
-                    // on l'affiche uniquement si le support a déjà répondu
-                    return $conversation->messages()
-                        ->where('sender_id', $otherUser->id)
-                        ->exists();
-                })*/
+                ->map(
+                    fn(Conversation $conversation) =>
+                    $this->conversationPayload($conversation, $user)
+                )
                 ->values()
-                ->map(fn(Conversation $conversation) => $this->conversationPayload($conversation, $user))
         );
     }
 
