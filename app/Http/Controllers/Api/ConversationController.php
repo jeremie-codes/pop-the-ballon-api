@@ -66,7 +66,7 @@ class ConversationController extends Controller
                 })
                 ->latest('last_message_at')
                 ->get()
-                ->filter(function (Conversation $conversation) use ($user) {
+                /*->filter(function (Conversation $conversation) use ($user) {
 
                     $otherUser = $conversation->user_one_id == $user->id
                         ? $conversation->userTwo
@@ -82,7 +82,7 @@ class ConversationController extends Controller
                     return $conversation->messages()
                         ->where('sender_id', $otherUser->id)
                         ->exists();
-                })
+                })*/
                 ->values()
                 ->map(fn(Conversation $conversation) => $this->conversationPayload($conversation, $user))
         );
