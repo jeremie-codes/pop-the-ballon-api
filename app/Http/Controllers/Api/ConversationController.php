@@ -98,6 +98,7 @@ class ConversationController extends Controller
         );
     }
 
+
     public function show(Request $request, Conversation $conversation)
     {
         $user = $request->user();

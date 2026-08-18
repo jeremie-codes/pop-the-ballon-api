@@ -27,12 +27,10 @@ class ChatConversation extends Page
     public $attachment = null;
 
 
-
     public function mount($record): void
     {
         $this->record = $this->resolveRecord($record);
     }
-
 
 
     public function sendMessage(): void
