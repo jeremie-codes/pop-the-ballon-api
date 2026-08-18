@@ -239,16 +239,16 @@ class InteractionController extends Controller
 
                     // Pour A, le nouveau match est B
                     MatchCreated::dispatch(
-                        userId: $actor->id,
-                        matchedUser: $target,
-                        conversation: $conversation,
+                        $actor->id,
+                        $target,
+                        $conversation,
                     );
 
                     // Pour B, le nouveau match est A
                     MatchCreated::dispatch(
-                        userId: $target->id,
-                        matchedUser: $actor,
-                        conversation: $conversation,
+                        $target->id,
+                        $actor,
+                        $conversation,
                     );
                 }
             }

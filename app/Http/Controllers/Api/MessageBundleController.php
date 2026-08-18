@@ -90,7 +90,7 @@ class MessageBundleController extends Controller
 
     public function initiate(
         Request $request,
-        FlexpaieService $flexpay,
+        FlexpaieService $flexpay
     ) {
         try {
             $rules = [
@@ -114,22 +114,22 @@ class MessageBundleController extends Controller
             if ($data['method'] === 'mobile') {
 
                 $response = $flexpay->mobilePayment(
-                    reference: $reference,
-                    amount: $data['currency'] === 'USD' ? $bundle->price : $bundle->equivalent,
-                    phone: $data['phone'],
-                    currency: $data['currency'],
-                    callbackUrl: route('payments.callback', ['reference' => $reference, 'actor_id' => $user->id]), // on pase actor_id pour pouvoir identifier le user qui a effectue la transaction au cas ou il achete le forfait pour un autre profil
+                    $reference,
+                    $data['currency'] === 'USD' ? $bundle->price : $bundle->equivalent,
+                    $data['phone'],
+                    $data['currency'],
+                    route('payments.callback', ['reference' => $reference, 'actor_id' => $user->id]), // on pase actor_id pour pouvoir identifier le user qui a effectue la transaction au cas ou il achete le forfait pour un autre profil
                 );
             } else {
 
                 $response = $flexpay->cardPayment(
-                    reference: $reference,
-                    amount: $data['currency'] === 'USD' ? $bundle->price : $bundle->equivalent,
-                    currency: $data['currency'],
-                    callbackUrl: route('payments.callback', ['reference' => $reference, 'actor_id' => $user->id]), // on pase actor_id pour pouvoir identifier le user qui a effectue la transaction au cas ou il achete le forfait pour un autre profil
-                    approveUrl: route('payments.success', ['reference' => $reference, 'actor_id' => $user->id]), // on pase actor_id pour pouvoir identifier le user qui a effectue la transaction au cas ou il achete le forfait pour un autre profil
-                    cancelUrl: route('payments.canceled', ['reference' => $reference]),
-                    declineUrl: route('payments.declined',  ['reference' => $reference]),
+                    $reference,
+                    $data['currency'] === 'USD' ? $bundle->price : $bundle->equivalent,
+                    $data['currency'],
+                    route('payments.callback', ['reference' => $reference, 'actor_id' => $user->id]), // on pase actor_id pour pouvoir identifier le user qui a effectue la transaction au cas ou il achete le forfait pour un autre profil
+                    route('payments.success', ['reference' => $reference, 'actor_id' => $user->id]), // on pase actor_id pour pouvoir identifier le user qui a effectue la transaction au cas ou il achete le forfait pour un autre profil
+                    route('payments.canceled', ['reference' => $reference]),
+                    route('payments.declined',  ['reference' => $reference]),
                 );
             }
 

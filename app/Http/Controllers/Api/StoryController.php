@@ -13,7 +13,8 @@ class StoryController extends Controller
 {
     public function index(Request $request)
     {
-        $userId = $request->user('sanctum')?->id;
+        $user = $request->user('sanctum');
+        $userId = $user ? $user->id : null;
 
         $stories = $this->activeStories()
             ->groupBy('user_id')
@@ -63,7 +64,7 @@ class StoryController extends Controller
             StoryMedia::query()->create([
                 'story_id' => $story->id,
                 'path' => 'storage/' . $path,
-                'url' => Storage::disk('public')->url($path),
+                'url' => url('storage/' . $path),
             ]);
 
             return response()->json(
@@ -121,7 +122,8 @@ class StoryController extends Controller
 
     public function deleteExpiredStories(Request $request)
     {
-        $userId = $request->user('sanctum')?->id;
+        $user = $request->user('sanctum');
+        $userId = $user ? $user->id : null;
 
         $query = Story::query()
             ->where('expires_at', '<', now())

@@ -43,21 +43,21 @@ class VerificationPaymentController extends Controller
 
             if ($data['method'] == "mobile") {
                 $response = $flexpay->mobilePayment(
-                    reference: $reference,
-                    amount: $data['currency'] == "USD" ? $priceUSD : $priceCDF,
-                    phone: $data['phone'],
-                    currency: $data['currency'],
-                    callbackUrl: route('verification.callback', ['reference' => $reference])
+                    $reference,
+                    $data['currency'] == "USD" ? $priceUSD : $priceCDF,
+                    $data['phone'],
+                    $data['currency'],
+                    route('verification.callback', ['reference' => $reference])
                 );
             } else {
                 $response = $flexpay->cardPayment(
-                    reference: $reference,
-                    amount: $data['currency'] == "USD" ? $priceUSD : $priceCDF,
-                    currency: $data['currency'],
-                    callbackUrl: route('verification.callback', ['reference' => $reference]),
-                    approveUrl: route('verification.success', ['reference' => $reference]),
-                    cancelUrl: route('verification.cancel', ['reference' => $reference]),
-                    declineUrl: route('verification.decline', ['reference' => $reference])
+                    $reference,
+                    $data['currency'] == "USD" ? $priceUSD : $priceCDF,
+                    $data['currency'],
+                    route('verification.callback', ['reference' => $reference]),
+                    route('verification.success', ['reference' => $reference]),
+                    route('verification.cancel', ['reference' => $reference]),
+                    route('verification.decline', ['reference' => $reference])
                 );
             }
 

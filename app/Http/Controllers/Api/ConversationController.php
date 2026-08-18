@@ -188,17 +188,17 @@ class ConversationController extends Controller
             // Expéditeur : mettre à jour son Inbox,
             // mais ne pas incrémenter unread
             ConversationUpdated::dispatch(
-                message: $message,
-                userId: $user->id,
-                incrementUnread: false,
+                $message,
+                $user->id,
+                false
             );
 
             // Destinataire : mettre à jour son Inbox
             // et incrémenter unread
             ConversationUpdated::dispatch(
-                message: $message,
-                userId: $otherUser->id,
-                incrementUnread: true,
+                $message,
+                $otherUser->id,
+                true,
             );
 
             $notificationBody = $message->type === MessageType::VOICE
@@ -285,9 +285,9 @@ class ConversationController extends Controller
 
             // 3. Informer la page de conversation
             MessageSeen::dispatch(
-                conversationId: $conversation->id,
-                readerId: $user->id,
-                messageIds: $messageIds
+                $conversation->id,
+                $user->id,
+                $messageIds
                     ->map(fn($id) => (string) $id)
                     ->values()
                     ->all(),
@@ -300,16 +300,16 @@ class ConversationController extends Controller
 
             // 5. Informer son Inbox
             ConversationSeen::dispatch(
-                conversationId: $conversation->id,
-                senderId: $senderId,
-                readerId: $user->id,
+                $conversation->id,
+                $senderId,
+                $user->id,
             );
 
             // 5. Informer le Inbox de l'autre utilisateur
             ConversationSeen::dispatch(
-                conversationId: $conversation->id,
-                senderId: $user->id,
-                readerId: $senderId,
+                $conversation->id,
+                $user->id,
+                $senderId,
             );
 
             return response()->json([
@@ -341,10 +341,6 @@ class ConversationController extends Controller
             ? $conversation->userTwo
             : $conversation->userOne;
 
-        $other = $conversation->user_one_id === $viewer->id
-            ? $conversation->userTwo
-            : $conversation->userOne;
-
         if ($viewer->is_staff !== $other->is_staff) {
             $last = $conversation->messages()
                 ->where('sender_id', $other->id)
@@ -369,6 +365,9 @@ class ConversationController extends Controller
             && $last->sender_id === $viewer->id
             && $last->read_at !== null;
 
+        $lastCreatedAt = $last ? $last->created_at : $conversation->created_at;
+        $lastMessageAt = $last ? $last->created_at : $conversation->last_message_at;
+
         $payload = [
             'id' => (string) $conversation->id,
             'profileId' => (string) $other->id,
@@ -376,20 +375,27 @@ class ConversationController extends Controller
             'verified' => (bool) $other->verified,
             'avatar' => optional($other->photos->first())->path ?? '',
             'is_staff' => (bool) $other->is_staff,
-            'is_voice' => $last?->type === MessageType::VOICE,
-            'is_video' => $last?->type === MessageType::VIDEO,
-            'is_image' => $last?->type === MessageType::IMAGE,
-            'message' => match ($last?->type?->value) {
-                'video' => 'Vidéo',
-                'image' => 'Image',
-                'voice' => 'Message vocal',
-                'text' => $last?->body ?? '',
-                default => '',
-            },
-            'time' => optional($last?->created_at ?? $conversation->created_at)->toISOString(),
+            'is_voice' => $last !== null && $last->type === MessageType::VOICE,
+            'is_video' => $last !== null && $last->type === MessageType::VIDEO,
+            'is_image' => $last !== null && $last->type === MessageType::IMAGE,
+            'message' => $last !== null ? (function () use ($last) {
+                switch ($last->type->value) {
+                    case 'video':
+                        return 'Vidéo';
+                    case 'image':
+                        return 'Image';
+                    case 'voice':
+                        return 'Message vocal';
+                    case 'text':
+                        return $last->body ?? '';
+                    default:
+                        return '';
+                }
+            })() : '',
+            'time' => $lastCreatedAt ? $lastCreatedAt->toISOString() : null,
             'unread' => $unread,
             'read' => $read,
-            'lastMessageAt' => optional($last?->created_at ?? $conversation->last_message_at)->toDateTimeString(),
+            'lastMessageAt' => $lastMessageAt ? $lastMessageAt->toDateTimeString() : null,
             'matched' => true,
             'senderId' => $last ? (string) $last->sender_id : null,
         ];
