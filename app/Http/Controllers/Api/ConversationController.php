@@ -413,6 +413,7 @@ class ConversationController extends Controller
                     'time' => $message->created_at->format('H:i'),
                     'mine' => $message->sender_id === $viewer->id,
                     'read' => $message->read_at !== null,
+                    'createdAt' => $message->created_at->toISOString(),
                 ])
                 ->values();
         }

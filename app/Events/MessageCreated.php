@@ -46,6 +46,7 @@ class MessageCreated implements ShouldBroadcastNow
             'read' => false,
             'sender_id' => (string) $this->message->sender_id,
             'clientId' => $this->clientId,
+            'createdAt' => $this->message->created_at->toISOString(),
             'conversation_id' => (string) $this->message->conversation_id,
         ];
     }
