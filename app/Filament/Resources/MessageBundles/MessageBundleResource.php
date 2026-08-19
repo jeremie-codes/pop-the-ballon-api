@@ -20,9 +20,15 @@ class MessageBundleResource extends Resource
 {
     protected static ?string $model = MessageBundle::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGift;
 
-    protected static ?string $recordTitleAttribute = 'App\Models\MessageBundle';
+    protected static ?string $navigationLabel = 'Packs de messages';
+
+    protected static ?string $modelLabel = 'Pack de messages';
+
+    protected static ?string $pluralModelLabel = 'Packs de messages';
+
+    protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema
     {

@@ -1,137 +1,324 @@
-<x-filament-panels::page class="flex flex-col flex-1 h-full">
-
-    {{-- Script Tailwind CDN --}}
+<x-filament-panels::page class="!p-0">
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <div class="flex flex1 flex-col border relative top-0 right-0 border-border-[#161617] rounded-xl overflow-hidden m-0 p-0" id="chat-container">
+    <div id="chat-container"
+        class="flex flex-col min-h-0 h-[calc(100dvh-8rem)] overflow-hidden border border-gray-200 dark:border-gray-800 rounded-xl relative">
 
-        {{-- Image de fond --}}
-        <div class="absolute inset-0 z-0">
-            <img src="{{ asset('images/bg_msg.png') }}" class="object-cover w-full h-full opacity-20">
+        {{-- Background --}}
+        <div class="absolute inset-0 z-0 pointer-events-none">
+            <img src="{{ asset('images/bg_msg.png') }}" class="object-cover w-full h-full opacity-10" alt="">
         </div>
 
-        {{-- Header --}}
-        <div class="z-10 flex items-center gap-3 p-5 bg-white dark:bg-[#161617]">
+
+        {{-- ========================================================= --}}
+        {{-- HEADER --}}
+        {{-- ========================================================= --}}
+
+        @php
+        $client = $this->record->client;
+        @endphp
+
+        <div
+            class="relative z-10 flex items-center gap-4 px-5 py-4 bg-white/95 dark:bg-[#161617]/95 backdrop-blur border-b border-gray-200 dark:border-gray-800 shrink-0">
+
+            {{-- Avatar --}}
+            <img src="{{ $client?->avatar
+                    ? asset('storage/' . $client->avatar)
+                    : asset('default-avatar.png') }}"
+                class="object-cover w-12 h-12 bg-gray-100 rounded-full dark:bg-gray-800" alt="">
+
+            {{-- User info --}}
+            <div class="flex-1 min-w-0">
+
+                <div class="flex items-center gap-2">
+
+                    <h2 class="text-base font-semibold truncate">
+                        {{ $client?->first_name }}
+                        {{ $client?->last_name }}
+                    </h2>
+
+                    @if($client?->verified)
+                    <img src="{{ asset('images/badge-check.png') }}" class="object-contain w-5 h-5 shrink-0"
+                        alt="Compte vérifié">
+                    @endif
+
+                </div>
+
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    Conversation support
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {{-- ========================================================= --}}
+        {{-- MESSAGES --}}
+        {{-- ========================================================= --}}
+
+        <div id="messages-container"
+            class="relative z-10 flex-1 min-h-0 px-5 py-5 space-y-3 overflow-x-hidden overflow-y-auto">
+
             @php
-            $client = $this->record->client;
+            $messages = $this->record
+            ->messages()
+            ->with('sender')
+            ->oldest()
+            ->get();
             @endphp
 
-            <img src="{{ $client?->avatar
-                    ? asset('storage/'.$client->avatar)
-                    : asset('default-avatar.png') }}" class="object-cover w-12 h-12 bg-[#09090b] rounded-full" alt="">
 
-            <div>
-                <div class="flex flex-row items-center gap-1">
-                    <div class="text-lg font-bold">
-                        {{ $client?->first_name }} {{ $client?->last_name }}
-                    </div>
-                    <div>
-                        @if(!$client?->verified)
-                        <img src="{{ asset('images/badge-check.png') }}"
-                            class="object-cover w-5 h-5 bg-[#09090b] rounded-full" alt="">
-                        @endif
-                    </div>
+            @forelse($messages as $msg)
 
-                </div>
-                <div class="text-sm text-gray-500">
-                    Support conversation
-                </div>
-            </div>
-        </div>
+            @php
+            $isMine = $msg->sender_id === auth()->id();
+            $messageType = $msg->type?->value;
+            @endphp
 
-        {{-- Messages --}}
-        <div class="p-5 space-y-3 roundedxl overflow-y-auto h-[80vh] border-t border-b overflow-hidden border-white dark:border-[#161617] overrflow-x-scroll">
 
-            @foreach($this->record->messages()->latest()->get()->reverse() as $msg)
+            {{-- ================================================= --}}
+            {{-- MESSAGE ENVOYÉ --}}
+            {{-- ================================================= --}}
 
-            @if($msg->sender_id == auth()->id())
+            @if($isMine)
 
             <div class="flex justify-end">
 
-                <div class="max-w-md min-w-28 text-white bg-[#f45164] rounded-t-xl rounded-bl-xl {{ $msg->type->value === 'image' || $msg->type->value === 'video' ? 'p-1': 'px-4 py-2' }}">
+                <div class="max-w-[75%] sm:max-w-md overflow-hidden text-white bg-[#f45164] rounded-t-2xl rounded-bl-2xl shadow-sm">
 
-                    @if($msg->type->value === 'text')
+                    {{-- IMAGE --}}
+                    @if($messageType === 'image')
 
-                    {{ $msg->body }}
+                    <img src="{{ asset('storage/' . $msg->attachment) }}"
+                        class="block max-w-full max-h-[400px] object-contain rounded-xl" alt="Image">
 
-                    @elseif($msg->type->value === 'image')
+                    {{-- VIDEO --}}
+                    @elseif($messageType === 'video')
 
-                    <img src="{{ asset('storage/'.$msg->attachment) }}" class="max-w-xs rounded-xl" alt="image" />
-
-                    @elseif($msg->type->value === 'video')
-
-                    <video controls class="max-w-xs rounded-xl">
-                        <source src="{{ asset('storage/'.$msg->attachment) }}" type="{{ $msg->attachment_mime }}">
+                    <video controls preload="metadata" class="block max-w-full max-h-[400px] rounded-xl">
+                        <source src="{{ asset('storage/' . $msg->attachment) }}" type="{{ $msg->attachment_mime }}">
                     </video>
+
+                    {{-- TEXTE --}}
+                    @else
+
+                    <div class="px-4 py-2">
+                        <p class="break-words">
+                            {{ $msg->body }}
+                        </p>
+                    </div>
 
                     @endif
 
-                    <div class="flex justify-end">
-                        <span class="text-xs text-gray-200">
+
+                    {{-- Time --}}
+                    <div class="flex justify-end px-3 pb-2">
+
+                        <span class="text-[11px] text-white/70">
                             {{ $msg->created_at->format('H:i') }}
                         </span>
+
                     </div>
+
                 </div>
 
             </div>
+
+
+            {{-- ================================================= --}}
+            {{-- MESSAGE CLIENT --}}
+            {{-- ================================================= --}}
 
             @else
 
             <div class="flex justify-start">
-                <div class="max-w-md px-4 py-2 bg-white shadow-sm dark:bg-[#161617] dark:text-white rounded-br-xl">
-                    {{ $msg->body }}
+
+                <div class="max-w-[75%] sm:max-w-md overflow-hidden bg-white dark:bg-[#161617] text-gray-900 dark:text-white rounded-t-2xl rounded-br-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+
+                    {{-- IMAGE --}}
+                    @if($messageType === 'image')
+
+                    <img src="{{ asset('storage/' . $msg->attachment) }}"
+                        class="block max-w-full max-h-[400px] object-contain rounded-xl" alt="Image">
+
+                    {{-- VIDEO --}}
+                    @elseif($messageType === 'video')
+
+                    <video controls preload="metadata" class="block max-w-full max-h-[400px] rounded-xl">
+                        <source src="{{ asset('storage/' . $msg->attachment) }}" type="{{ $msg->attachment_mime }}">
+                    </video>
+
+                    {{-- TEXTE --}}
+                    @else
+
+                    <div class="px-4 py-2">
+                        <p class="break-words">
+                            {{ $msg->body }}
+                        </p>
+                    </div>
+
+                    @endif
+
+
+                    {{-- Time --}}
+                    <div class="flex justify-end px-3 pb-2">
+
+                        <span class="text-[11px] text-gray-400">
+                            {{ $msg->created_at->format('H:i') }}
+                        </span>
+
+                    </div>
+
                 </div>
+
             </div>
+
             @endif
 
-            @endforeach
+            @empty
 
+            <div class="flex items-center justify-center h-full">
+
+                <div class="text-center text-gray-500">
+
+                    <div class="flex justify-center mb-3">
+
+                        <x-heroicon-o-chat-bubble-left-right class="w-10 h-10" />
+
+                    </div>
+
+                    <p class="text-sm">
+                        Aucun message dans cette conversation.
+                    </p>
+
+                </div>
+
+            </div>
+
+            @endforelse
 
         </div>
 
-        {{-- Send --}}
-        <form wire:submit.prevent="sendMessage" enctype="multipart/form-data"  class="z-10 flex items-center justify-between gap-3 p-5">
 
-            <label for="attachment"
-                class="flex items-center justify-center w-10 h-10 transition rounded-full cursor-pointer bg-pink-500/10 hover:bg-pink-800/30">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
-                    stroke="currentColor" class="w-6 h-6 text-gray-500">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l9.193-9.193a3 3 0 014.243 4.243l-9.193 9.193a1.5 1.5 0 01-2.121-2.121l8.486-8.486" />
-                </svg>
-            </label>
+        {{-- ========================================================= --}}
+        {{-- COMPOSER --}}
+        {{-- ========================================================= --}}
+
+        <form wire:submit.prevent="sendMessage" enctype="multipart/form-data"
+            class="relative z-10 shrink-0 flex items-end gap-3 px-4 py-4 bg-white/95 dark:bg-[#161617]/95 backdrop-blur border-t border-gray-200 dark:border-gray-800">
+
+            {{-- Attachment --}}
+            <div class="shrink-0">
+
+                <label for="attachment"
+                    class="flex items-center justify-center w-10 h-10 transition bg-gray-100 rounded-full cursor-pointer dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700">
+
+                    <x-heroicon-o-paper-clip class="w-5 h-5 text-gray-500" />
+
+                </label>
+
+                <input id="attachment" type="file" wire:model="attachment" accept="image/*,video/*" class="hidden">
+
+            </div>
 
 
-            <input id="attachment" type="file" wire:model="attachment" accept="image/*,video/*" class="hidden" />
-
+            {{-- Attachment preview --}}
             @if($attachment)
-                <div class="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 rounded-lg dark:bg-gray-800 min-w-60">
-                    <span>
-                        {{ $attachment->getMimeType() }} - {{ $attachment->getClientOriginalName() }}
-                    </span>
 
-                    <button type="button" wire:click="$set('attachment', null)" class="text-red-500">
-                        ✕
-                    </button>
+            <div
+                class="absolute flex items-center gap-3 px-3 py-2 mb-2 bg-white border border-gray-200 shadow-lg bottom-full left-4 right-4 rounded-xl dark:bg-gray-900 dark:border-gray-700">
+
+                <div class="flex-1 min-w-0">
+
+                    <p class="text-sm font-medium truncate">
+                        {{ $attachment->getClientOriginalName() }}
+                    </p>
+
+                    <p class="text-xs text-gray-500">
+                        {{ $attachment->getMimeType() }}
+                    </p>
+
                 </div>
+
+                <button type="button" wire:click="$set('attachment', null)"
+                    class="flex items-center justify-center w-8 h-8 text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <x-heroicon-o-x-mark class="w-5 h-5" />
+                </button>
+
+            </div>
+
             @endif
 
-            <textarea wire:model="message" class="flex-1 px-4 py-3 border rounded-xl bg-black/30" placeholder="Écrire un message..." rows="1"></textarea>
 
-            <button type="submit" class="px-5 py-3 text-white bg-[#f45164] rounded-xl">
-                Envoyer
+            {{-- Message --}}
+            <textarea wire:model="message" rows="1" placeholder="Écrire un message..." class="
+                    flex-1
+                    resize-none
+                    px-4
+                    py-2.5
+                    border
+                    border-gray-200
+                    dark:border-gray-700
+                    rounded-2xl
+                    bg-gray-50
+                    dark:bg-gray-900
+                    focus:ring-2
+                    focus:ring-[#f45164]
+                    focus:border-transparent
+                    outline-none
+                "></textarea>
+
+
+            {{-- Send --}}
+            <button type="submit" wire:loading.attr="disabled" wire:target="sendMessage,attachment"
+                class="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 text-white bg-[#f45164] hover:bg-[#e84457] rounded-2xl transition disabled:opacity-50">
+
+                <x-heroicon-o-paper-airplane class="w-5 h-5" />
+
+                <span class="hidden sm:inline">
+                    Envoyer
+                </span>
+
             </button>
 
         </form>
 
     </div>
 
-    <script>
-        // récuperer la hauter de l'écran
-        const screenHeight = window.innerHeight;
-        const container = document.getElementById('chat-container');
 
-        container.classList.add(`h-[${screenHeight-200}px]`)
-        // alert('La hauteur de l\'écran est : ' + screenHeight + 'px');
+    {{-- ============================================================= --}}
+    {{-- AUTO-SCROLL --}}
+    {{-- ============================================================= --}}
+
+    <script>
+        function scrollChatToBottom() {
+            const container = document.getElementById('messages-container');
+
+            if (!container) {
+                return;
+            }
+
+            requestAnimationFrame(() => {
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            scrollChatToBottom();
+        });
+
+        document.addEventListener('livewire:navigated', () => {
+            scrollChatToBottom();
+        });
+
+        document.addEventListener('livewire:initialized', () => {
+            scrollChatToBottom();
+        });
+
+        Livewire.hook('morph.updated', () => {
+            scrollChatToBottom();
+        });
     </script>
+
 </x-filament-panels::page>

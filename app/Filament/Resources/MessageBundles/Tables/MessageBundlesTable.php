@@ -16,44 +16,120 @@ class MessageBundlesTable
     {
         return $table
             ->columns([
+
+                /*
+                |--------------------------------------------------------------------------
+                | Pack
+                |--------------------------------------------------------------------------
+                */
+
                 TextColumn::make('title')
-                    ->searchable(),
+                    ->label('Pack')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->description(
+                        fn($record) => $record->description
+                    ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Messages
+                |--------------------------------------------------------------------------
+                */
+
                 TextColumn::make('messages')
+                    ->label('Messages')
                     ->numeric()
-                    ->sortable(),
+                    ->sortable()
+                    ->suffix(' messages'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Prix
+                |--------------------------------------------------------------------------
+                */
+
                 TextColumn::make('price')
-                    ->money()
+                    ->label('Prix')
+                    ->money('USD')
                     ->sortable(),
-                TextColumn::make('currency')
-                    ->searchable(),
+
                 TextColumn::make('equivalent')
-                        ->suffix(' CDF')
-                        ->sortable(),
+                    ->label('Équivalent')
+                    ->numeric()
+                    ->sortable()
+                    ->suffix(' CDF'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Devise
+                |--------------------------------------------------------------------------
+                */
+
+                TextColumn::make('currency')
+                    ->label('Devise')
+                    ->badge()
+                    ->sortable(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Popularité
+                |--------------------------------------------------------------------------
+                */
+
                 IconColumn::make('popular')
-                    ->boolean(),
+                    ->label('Populaire')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-star')
+                    ->falseIcon('heroicon-o-minus'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Statut
+                |--------------------------------------------------------------------------
+                */
+
                 IconColumn::make('active')
-                    ->default(true)
-                    ->boolean(),
+                    ->label('Actif')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle'),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Dates
+                |--------------------------------------------------------------------------
+                */
+
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Créé le')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Modifié le')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+
             ->filters([
                 //
             ])
+
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
             ])
+
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+
+            ->defaultSort('messages', 'asc');
     }
 }
