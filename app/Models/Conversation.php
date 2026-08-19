@@ -74,4 +74,17 @@ class Conversation extends Model
 
         return $this->userTwo;
     }
+
+    public static function getConversationId($userOneId, $userTwoId)
+    {
+        $conversation = self::where(function ($query) use ($userOneId, $userTwoId) {
+            $query->where('user_one_id', $userOneId)
+                  ->where('user_two_id', $userTwoId);
+        })->orWhere(function ($query) use ($userOneId, $userTwoId) {
+            $query->where('user_one_id', $userTwoId)
+                  ->where('user_two_id', $userOneId);
+        })->first();
+
+        return $conversation ? $conversation->id : null;
+    }
 }

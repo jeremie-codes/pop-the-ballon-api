@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\DiscoverFeedResource;
+use App\Models\Conversation;
 use App\Models\MessageCredit;
 use App\Services\DiscoverFeedService;
 use Illuminate\Support\Facades\Hash;
@@ -412,7 +413,7 @@ class ProfileController extends Controller
             'poped' => $poped,
             'popedMe' => $popedMe,
             'lastSeen' => optional($profile->last_seen_at)->toISOString(),
-            'conversationId' => $matched ? MatchModel::getConversationId($viewer->id, $profile->id) : null,
+            'conversationId' => $matched ? Conversation::getConversationId($viewer->id, $profile->id) : null,
             'likedMeAt' => $likedMeAt ? $likedMeAt->created_at->toISOString() : null,
         ];
     }

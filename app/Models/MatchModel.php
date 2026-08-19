@@ -25,17 +25,4 @@ class MatchModel extends Model
         return $this->belongsTo(User::class, 'user_two_id');
     }
 
-    public static function getConversationId($userOneId, $userTwoId)
-    {
-        $match = self::where(function ($query) use ($userOneId, $userTwoId) {
-            $query->where('user_one_id', $userOneId)
-                  ->where('user_two_id', $userTwoId);
-        })->orWhere(function ($query) use ($userOneId, $userTwoId) {
-            $query->where('user_one_id', $userTwoId)
-                  ->where('user_two_id', $userOneId);
-        })->first();
-
-        return $match ? $match->id : null;
-    }
-
 }
