@@ -8,6 +8,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Carbon;
@@ -183,6 +184,16 @@ class User extends Authenticatable implements FilamentUser, HasName
                 'interests' => $this->interests->pluck('name')->values(),
             ],
         ];
+    }
+
+    public function popChoiceAnswers(): HasMany
+    {
+        return $this->hasMany(PopChoiceAnswer::class);
+    }
+
+    public function popChoiceSessions(): HasMany
+    {
+        return $this->hasMany(PopChoiceSession::class);
     }
 
     public function canAccessPanel(Panel $panel): bool

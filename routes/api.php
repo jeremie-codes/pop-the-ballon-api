@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\OtpController;
+use App\Http\Controllers\Api\PopChoiceController;
 use App\Http\Controllers\Api\VerificationPaymentController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -164,7 +165,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
             $response = Broadcast::auth($request);
             return $response;
-            
         } catch (\Throwable $e) {
 
             logger()->error('❌ REVERB AUTH ERROR', [
@@ -193,6 +193,23 @@ Route::middleware('auth:sanctum')->group(function () {
     */
 
     Route::post('/verification-payments', [VerificationPaymentController::class, 'initiate']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pop Choices / Popups
+    |--------------------------------------------------------------------------
+    */
+
+    /* Automatic Pop Choices */
+    Route::get('/pop-choices/next', [PopChoiceController::class, 'next']);
+
+    /* Voluntary sessions */
+    Route::post('/pop-choices/sessions', [PopChoiceController::class, 'startSession']);
+    Route::get('/pop-choices/sessions/{session}/next', [PopChoiceController::class, 'nextForSession']);
+    Route::post('/pop-choices/sessions/{session}/complete', [PopChoiceController::class, 'completeSession']);
+
+    /* Answers */
+    Route::post('/pop-choices/{popChoice}/answer', [PopChoiceController::class, 'answer']);
 });
 
 Route::post('/payments/callback/{reference}', [MessageBundleController::class, 'callback'])->name('payments.callback');

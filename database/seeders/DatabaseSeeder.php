@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::updateOrCreate(
+        /*User::updateOrCreate(
             ['email' => 'admin@pop.cloud'],
             [
                 'first_name' => 'Super',
@@ -48,7 +48,11 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
                 'password' => Hash::make('@admin123'),
             ]
-        );
+        );*/
+
+        $this->call([
+            PopChoiceSeeder::class,
+        ]);
 
     }
 }
