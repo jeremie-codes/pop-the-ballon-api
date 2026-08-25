@@ -178,14 +178,14 @@ class AuthController extends Controller
         if (in_array(Str::lower($data['username']), $reserved)) {
             return response()->json([
                 'username_available' => false,
-                'phone_available' => !User::where('phone',$data['phone'])->exists(),
+                'phone_available' => empty($data['phone']) || !User::where('phone',$data['phone'])->exists(),
                 'email_available' => empty($email) || !User::where('email', $email)->exists(),
             ]);
         }
 
         return response()->json([
             'username_available' => !User::where('username',Str::lower($data['username']))->exists(),
-            'phone_available' => !User::where('phone',$data['phone'])->exists(),
+            'phone_available' => empty($data['phone']) || !User::where('phone',$data['phone'])->exists(),
             'email_available' => empty($email) || !User::where('email', $email)->exists(),
         ]);
     }
