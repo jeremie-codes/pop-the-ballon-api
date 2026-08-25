@@ -394,6 +394,7 @@ class ProfileController extends Controller
             'id' => (string) $profile->id,
             'name' => $profile->displayName(),
             'age' => $profile->age() ?? 18,
+            'gender' => $profile->gender ?? '',
             'city' => $profile->city ?? '',
             'country' => $profile->country ?? '',
             'bio' => $profile->bio ?? '',
