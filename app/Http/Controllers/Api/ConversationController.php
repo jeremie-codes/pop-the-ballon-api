@@ -221,9 +221,15 @@ class ConversationController extends Controller
                 );
             }
 
-            $credit->decrement(
-                'available_messages'
-            );
+            // Decrementer le nombre de messages disponibles par raport au type de meessage
+            if ($type === MessageType::TEXT) {
+                $credit->decrement('available_messages', 1);
+            } elseif ($type === MessageType::VOICE) {
+                $minutes = (int) ceil($message->attachment_duration / 60);
+                $credit->decrement('available_messages', $minutes);
+            } else {
+                $credit->decrement('available_messages', 2);
+            }
 
             return response()->json([
                 'id' => (string) $message->id,
