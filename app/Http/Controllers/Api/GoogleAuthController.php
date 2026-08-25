@@ -262,21 +262,6 @@ class GoogleAuthController extends Controller
         return $code;
     }
 
-
-    /**
-     * Redirige vers l'application Expo.
-     */
-    /*private function redirectToMobile(array $params)
-    {
-        $query = http_build_query($params);
-
-        //dd('poptheballon://auth/google?' . $query);
-
-        return redirect(
-            'poptheballon://auth/google?' . $query
-        );
-    }*/
-
     private function redirectToMobile(array $params)
     {
         return response()->view('auth.google-mobile-result', [
@@ -307,7 +292,7 @@ class GoogleAuthController extends Controller
             [
                 'registration_token' => ['required', 'string'],
                 'username' => ['required', 'string', 'max:30', 'regex:/^[a-zA-Z0-9_]+$/',],
-                'phone' => ['required', 'string', 'max:30'],
+                'phone' => ['nullable', 'string', 'max:30'],
                 'birth_date' => ['required', 'date'],
                 'gender' => ['required', 'string', 'max:50',],
                 'city' => ['required', 'string', 'max:120',],
@@ -322,8 +307,6 @@ class GoogleAuthController extends Controller
                 'username.required' => 'Veuillez choisir un nom d’utilisateur.',
                 'username.max' => 'Votre nom d’utilisateur ne peut pas dépasser 30 caractères.',
                 'username.regex' => 'Le nom d’utilisateur doit contenir uniquement des lettres, des chiffres et le caractère _.',
-                'phone.required' => 'Veuillez renseigner votre numéro de téléphone.',
-                'phone.max' => 'Le numéro de téléphone est trop long.',
                 'birth_date.required' => 'Votre date de naissance est obligatoire.',
                 'birth_date.date' => 'La date de naissance renseignée est invalide.',
                 'gender.required' => 'Veuillez sélectionner votre genre.',
@@ -353,7 +336,7 @@ class GoogleAuthController extends Controller
         * devient :
         * 243997365080
         */
-        $phone = preg_replace('/\D+/', '', $data['phone']);
+        $phone = $data['phone'] ? preg_replace('/\D+/', '', $data['phone']): null;
 
         /*
         |--------------------------------------------------------------------------

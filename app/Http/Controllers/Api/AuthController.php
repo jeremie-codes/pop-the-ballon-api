@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\MessageCredit;
 use App\Models\User;
 use App\Models\UserDevice;
 use Illuminate\Http\Request;
@@ -106,7 +105,7 @@ class AuthController extends Controller
                 'first_name' => ['required', 'string', 'max:255'],
                 'last_name' => ['required', 'string', 'max:255'],
                 'username' => 'required|string|max:255|unique:users,username',
-                'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
+                'phone' => ['nullable', 'string', 'max:30', 'unique:users,phone'],
                 'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
                 'password' => ['required', 'min:8'],
                 'birth_date'=>[ 'required', 'date'],
@@ -157,7 +156,7 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'username'=>'required|string',
-            'phone'=>'required|string',
+            'phone'=>'nullable|string',
             'email'=>'nullable|email',
         ]);
 
