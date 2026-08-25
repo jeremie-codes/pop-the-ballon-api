@@ -135,7 +135,7 @@
                 </h2>
 
                 <p class="mt-2 text-sm leading-6 text-gray-600">
-                    Une question concernant vos achats, forfaits de messages
+                    Une question concernant vos achats, crédits de messages
                     ou paiements ?
                 </p>
 

@@ -59,8 +59,8 @@ class MessageBundleController extends Controller
 
             AppNotification::createAndBroadcast([
                 'user_id' => $requested->id,
-                'title' => 'Demande de forfait',
-                'message' => $requester->displayName() . ' vous demande de lui acheter un forfait messages pour discuter.',
+                'title' => 'Demande des crédits',
+                'message' => $requester->displayName() . ' vous demande de lui acheter un pack de crédits pour discuter avec lui',
                 'kind' => 'bundle_request',
                 'profile_id' => $requester->id,
             ]);
@@ -69,7 +69,7 @@ class MessageBundleController extends Controller
                 $expo->send(
                     $device->expo_token,
                     '🎈PopTheBallon - Nouvelle notification',
-                    $actor->displayName() . ' vous demande de lui acheter un forfait messages pour discuter.',
+                    $actor->displayName() . ' vous demande de lui acheter un pack de crédits pour discuter avec lui.',
                     [
                         'type' => 'bundle_request',
                         'user_id' => $actor->id,
@@ -78,7 +78,7 @@ class MessageBundleController extends Controller
                 );
             }
 
-            return response()->json(['success' => true, 'message' => 'Demande de forfait envoyee.'], 201);
+            return response()->json(['success' => true, 'message' => 'Demande des crédits envoyée.'], 201);
         } catch (\Throwable $e) {
             logger()->error('MessageBundleController.requestBundle error', [
                 'error' => $e->getMessage(),
@@ -143,7 +143,7 @@ class MessageBundleController extends Controller
                 'payment_method' => $data['method'],
                 'order_number' => $response['orderNumber'] ?? null,
                 'status' => 'pending',
-                'description' => !empty($data['requester_id']) ? 'Forfait acheté par ' . $user->displayName() : null,
+                'description' => !empty($data['requester_id']) ? 'Pack de Crédits acheté par ' . $user->displayName() : null,
             ]);
 
             return response()->json([
@@ -244,8 +244,8 @@ class MessageBundleController extends Controller
                                 // Notification pour l'acheteur
                                 AppNotification::createAndBroadcast([
                                     'user_id' => $actor->id,
-                                    'title' => 'Achat de forfait',
-                                    'message' => 'Vous avez acheté un forfait messages '
+                                    'title' => 'Achat des crédits',
+                                    'message' => 'Vous avez acheté un pack crédit '
                                         . $bundle->title
                                         . ' pour '
                                         . $user->displayName()
@@ -260,9 +260,9 @@ class MessageBundleController extends Controller
                                 // Notification pour la personne qui reçoit le forfait
                                 AppNotification::createAndBroadcast([
                                     'user_id' => $user->id,
-                                    'title' => 'Achat de forfait',
+                                    'title' => 'Achat des crédits',
                                     'message' => $actor->displayName()
-                                        . ' vous a acheté un forfait messages '
+                                        . ' vous a acheté un pack crédit '
                                         . $bundle->title
                                         . ' pour discuter avec lui.',
                                     'kind' => 'bundle_purchase',
@@ -277,7 +277,7 @@ class MessageBundleController extends Controller
                                     $expo->send(
                                         $deviceActor->expo_token,
                                         '🎈PopTheBallon - Nouvelle notification',
-                                        'Vous avez acheté un forfait messages '
+                                        'Vous avez acheté un pack crédit '
                                             . $bundle->title
                                             . ' pour '
                                             . $user->displayName()
@@ -297,7 +297,7 @@ class MessageBundleController extends Controller
                                         $deviceUser->expo_token,
                                         '🎈PopTheBallon - Nouvelle notification',
                                         $actor->displayName()
-                                            . ' vous a acheté un forfait messages '
+                                            . ' vous a acheté un pack crédit '
                                             . $bundle->title
                                             . ' pour discuter avec lui.',
                                         [
@@ -311,8 +311,8 @@ class MessageBundleController extends Controller
                             } else {
                                 AppNotification::createAndBroadcast([
                                     'user_id' =>  $user->id,
-                                    'title' => 'Achat de forfait',
-                                    'message' => 'Vous avez acheté un forfait messages ' . $bundle->title . ' pour discuter avec vos matchs.',
+                                    'title' => 'Achat des crédits',
+                                    'message' => 'Vous avez acheté un pack crédit ' . $bundle->title . ' pour discuter avec vos matchs.',
                                     'kind' => 'bundle_purchase',
                                     'profile_id' => $user->id,
                                 ]);
@@ -323,7 +323,7 @@ class MessageBundleController extends Controller
                                     $expo->send(
                                         $device->expo_token,
                                         '🎈PopTheBallon - Nouvelle notification: ',
-                                        'Vous avez acheté un forfait messages ' . $bundle->title . ' pour discuter avec vos matchs.',
+                                        'Vous avez acheté un pack crédit ' . $bundle->title . ' pour discuter avec vos matchs.',
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $user->id,
@@ -450,8 +450,8 @@ class MessageBundleController extends Controller
                                 // Notification pour l'acheteur
                                 AppNotification::createAndBroadcast([
                                     'user_id' => $actor->id,
-                                    'title' => 'Achat de forfait',
-                                    'message' => 'Vous avez acheté un forfait messages '
+                                    'title' => 'Achat des crédits',
+                                    'message' => 'Vous avez acheté un pack crédit '
                                         . $bundle->title
                                         . ' pour '
                                         . $user->displayName()
@@ -466,9 +466,9 @@ class MessageBundleController extends Controller
                                 // Notification pour la personne qui reçoit le forfait
                                 AppNotification::createAndBroadcast([
                                     'user_id' => $user->id,
-                                    'title' => 'Achat de forfait',
+                                    'title' => 'Achat des crédits',
                                     'message' => $actor->displayName()
-                                        . ' vous a acheté un forfait messages '
+                                        . ' vous a acheté un pack crédit '
                                         . $bundle->title
                                         . ' pour discuter avec lui.',
                                     'kind' => 'bundle_purchase',
@@ -483,7 +483,7 @@ class MessageBundleController extends Controller
                                     $expo->send(
                                         $deviceActor->expo_token,
                                         '🎈PopTheBallon - Nouvelle notification',
-                                        'Vous avez acheté un forfait messages '
+                                        'Vous avez acheté un pack crédit '
                                             . $bundle->title
                                             . ' pour '
                                             . $user->displayName()
@@ -503,7 +503,7 @@ class MessageBundleController extends Controller
                                         $deviceUser->expo_token,
                                         '🎈PopTheBallon - Nouvelle notification',
                                         $actor->displayName()
-                                            . ' vous a acheté un forfait messages '
+                                            . ' vous a acheté un pack crédit '
                                             . $bundle->title
                                             . ' pour discuter avec lui.',
                                         [
@@ -517,8 +517,8 @@ class MessageBundleController extends Controller
                             } else {
                                 AppNotification::createAndBroadcast([
                                     'user_id' =>  $user->id,
-                                    'title' => 'Achat de forfait',
-                                    'message' => 'Vous avez acheté un forfait messages ' . $bundle->title . ' pour discuter avec vos matchs.',
+                                    'title' => 'Achat des crédits',
+                                    'message' => 'Vous avez acheté un pack crédit ' . $bundle->title . ' pour discuter avec vos matchs.',
                                     'kind' => 'bundle_purchase',
                                     'profile_id' => $user->id,
                                 ]);
@@ -531,7 +531,7 @@ class MessageBundleController extends Controller
                                     $expo->send(
                                         $device->expo_token,
                                         '🎈PopTheBallon - Nouvelle notification: ',
-                                        'Vous avez acheté un forfait messages ' . $bundle->title . ' pour discuter avec vos matchs.',
+                                        'Vous avez acheté un pack crédit ' . $bundle->title . ' pour discuter avec vos matchs.',
                                         [
                                             'type' => 'bundle_purchase',
                                             'user_id' => $user->id,
@@ -627,8 +627,8 @@ class MessageBundleController extends Controller
                     // Notification pour l'acheteur
                     AppNotification::createAndBroadcast([
                         'user_id' => $actor->id,
-                        'title' => 'Achat de forfait',
-                        'message' => 'Vous avez acheté un forfait messages '
+                        'title' => 'Achat des crédits',
+                        'message' => 'Vous avez acheté un pack crédit '
                             . $bundle->title
                             . ' pour '
                             . $user->displayName()
@@ -643,9 +643,9 @@ class MessageBundleController extends Controller
                     // Notification pour la personne qui reçoit le forfait
                     AppNotification::createAndBroadcast([
                         'user_id' => $user->id,
-                        'title' => 'Achat de forfait',
+                        'title' => 'Achat des crédits',
                         'message' => $actor->displayName()
-                            . ' vous a acheté un forfait messages '
+                            . ' vous a acheté un pack crédit '
                             . $bundle->title
                             . ' pour discuter avec lui.',
                         'kind' => 'bundle_purchase',
@@ -660,7 +660,7 @@ class MessageBundleController extends Controller
                         $expo->send(
                             $deviceActor->expo_token,
                             '🎈PopTheBallon - Nouvelle notification',
-                            'Vous avez acheté un forfait messages '
+                            'Vous avez acheté un pack crédit '
                                 . $bundle->title
                                 . ' pour '
                                 . $user->displayName()
@@ -680,7 +680,7 @@ class MessageBundleController extends Controller
                             $deviceUser->expo_token,
                             '🎈PopTheBallon - Nouvelle notification',
                             $actor->displayName()
-                                . ' vous a acheté un forfait messages '
+                                . ' vous a acheté un pack crédit '
                                 . $bundle->title
                                 . ' pour discuter avec lui.',
                             [
@@ -694,8 +694,8 @@ class MessageBundleController extends Controller
                 } else {
                     AppNotification::createAndBroadcast([
                         'user_id' =>  $user->id,
-                        'title' => 'Achat de forfait',
-                        'message' => 'Vous avez acheté un forfait messages ' . $bundle->title . ' pour discuter avec vos matchs.',
+                        'title' => 'Achat des crédits',
+                        'message' => 'Vous avez acheté un pack crédit ' . $bundle->title . ' pour discuter avec vos matchs.',
                         'kind' => 'bundle_purchase',
                         'profile_id' => $user->id,
                     ]);
@@ -707,7 +707,7 @@ class MessageBundleController extends Controller
                         $expo->send(
                             $device->expo_token,
                             '🎈PopTheBallon - Nouvelle notification: ',
-                            'Vous avez acheté un forfait messages ' . $bundle->title . ' pour discuter avec vos matchs.',
+                            'Vous avez acheté un pack crédit ' . $bundle->title . ' pour discuter avec vos matchs.',
                             [
                                 'type' => 'bundle_purchase',
                                 'user_id' => $user->id,
@@ -802,7 +802,7 @@ class MessageBundleController extends Controller
             if ((float) $amount !== 0.0) {
                 return response()->json([
                     'code' => 1,
-                    'message' => 'Ce forfait n’est pas gratuit.',
+                    'message' => 'Ce pack n’est pas gratuit.',
                 ], 422);
             }
 
@@ -812,7 +812,7 @@ class MessageBundleController extends Controller
             if (!$bundle->active) {
                 return response()->json([
                     'code' => 1,
-                    'message' => 'Ce forfait n’est plus disponible.',
+                    'message' => 'Ce pack n’est plus disponible.',
                 ], 422);
             }
 
@@ -861,8 +861,8 @@ class MessageBundleController extends Controller
                     'order_number' => null,
                     'status' => 'success',
                     'description' => $buyer->id !== $user->id
-                        ? 'Forfait gratuit offert par ' . $buyer->displayName()
-                        : 'Forfait gratuit acheté pour soi-même',
+                        ? 'Pack crédit gratuit offert par ' . $buyer->displayName()
+                        : 'Pack crédit gratuit acheté pour soi-même',
                 ]);
 
                 /*
@@ -898,8 +898,8 @@ class MessageBundleController extends Controller
                     // Notification pour l'acheteur
                     AppNotification::createAndBroadcast([
                         'user_id' => $buyer->id,
-                        'title' => 'Achat de forfait',
-                        'message' => 'Vous avez offert le forfait messages '
+                        'title' => 'Achat des crédits',
+                        'message' => 'Vous avez offert le pack crédits '
                             . $bundle->title
                             . ' à '
                             . $user->displayName()
@@ -914,9 +914,9 @@ class MessageBundleController extends Controller
                     // Notification pour le bénéficiaire
                     AppNotification::createAndBroadcast([
                         'user_id' => $user->id,
-                        'title' => 'Forfait messages reçu',
+                        'title' => 'Pack crédits reçu',
                         'message' => $buyer->displayName()
-                            . ' vous a offert le forfait messages '
+                            . ' vous a offert le pack crédits '
                             . $bundle->title
                             . '.',
                         'kind' => 'bundle_purchase',
@@ -932,8 +932,8 @@ class MessageBundleController extends Controller
                     foreach ($buyer->devices as $device) {
                         $expo->send(
                             $device->expo_token,
-                            '🎈PopTheBallon - Forfait gratuit',
-                            'Vous avez offert le forfait messages '
+                            '🎈PopTheBallon - Crédits gratuit',
+                            'Vous avez offert le pack crédits '
                                 . $bundle->title
                                 . ' à '
                                 . $user->displayName()
@@ -953,9 +953,9 @@ class MessageBundleController extends Controller
                     foreach ($user->devices as $device) {
                         $expo->send(
                             $device->expo_token,
-                            '🎈PopTheBallon - Forfait messages reçu',
+                            '🎈PopTheBallon - Pack crédits reçu',
                             $buyer->displayName()
-                                . ' vous a offert le forfait messages '
+                                . ' vous a offert le pack crédits '
                                 . $bundle->title
                                 . '.',
                             [
@@ -973,8 +973,8 @@ class MessageBundleController extends Controller
                     */
                     AppNotification::createAndBroadcast([
                         'user_id' => $user->id,
-                        'title' => 'Forfait gratuit activé',
-                        'message' => 'Vous avez activé gratuitement le forfait messages'
+                        'title' => 'Crédits gratuit activé',
+                        'message' => 'Vous avez activé gratuitement le pack crédits'
                             . $bundle->title
                             . '.',
                         'kind' => 'bundle_purchase',
@@ -984,8 +984,8 @@ class MessageBundleController extends Controller
                     foreach ($user->devices as $device) {
                         $expo->send(
                             $device->expo_token,
-                            '🎈PopTheBallon - Forfait gratuit',
-                            'Vous avez activé gratuitement le forfait messages '
+                            '🎈PopTheBallon - Crédits gratuit',
+                            'Vous avez activé gratuitement le pack crédits '
                                 . $bundle->title
                                 . '.',
                             [
@@ -1002,7 +1002,7 @@ class MessageBundleController extends Controller
             return response()->json([
                 'code' => 0,
                 'status' => 'success',
-                'message' => 'Forfait gratuit activé avec succès.',
+                'message' => 'Pack crédits gratuit activé avec succès.',
             ], 201);
         } catch (\Throwable $e) {
 

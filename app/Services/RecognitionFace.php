@@ -55,7 +55,7 @@ class FlexpaieService
             'reference' => $reference,
             'amount' => $amount,
             'currency' => $currency,
-            'description' => "Paiement d'abonnement de forfait messages",
+            'description' => "Paiement de pack messages",
             'callback_url' => $callbackUrl,
             'approve_url' => $approveUrl,
             'cancel_url' => $cancelUrl,

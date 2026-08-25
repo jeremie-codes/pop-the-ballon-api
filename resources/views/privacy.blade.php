@@ -302,7 +302,7 @@
 
             <p class="leading-7 text-gray-700">
                 Pop The Ballon peut proposer des fonctionnalités ou des
-                services nécessitant un paiement, notamment des forfaits
+                services nécessitant un paiement, notamment des packs crédits
                 permettant d'utiliser certaines fonctionnalités de
                 messagerie.
             </p>
