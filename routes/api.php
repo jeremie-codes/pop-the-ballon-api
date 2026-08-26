@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AppleAuthController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\MessageBundleController;
 use App\Http\Controllers\Api\SupportRequestController;
@@ -33,7 +34,7 @@ Route::prefix('auth')->group(function () {
     Route::post('google/exchange', [GoogleAuthController::class, 'exchange']);
     Route::post('google/complete', [GoogleAuthController::class, 'completeRegistration']);
 
-    //Route::post('/registration', [GoogleAuthController::class, 'registration']);
+    Route::post('apple',[AppleAuthController::class, 'authenticate']);
 });
 
 Route::prefix('otp')->group(function () {
