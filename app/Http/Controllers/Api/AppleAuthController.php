@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -16,12 +16,11 @@ class AppleAuthController extends Controller
      * Authentification avec Sign in with Apple.
      *
      * Le mobile effectue directement l'authentification
-     * auprès d'Apple puis envoie ici :
+     * auprès d'Apple puis envoie :
      *
      * - identity_token
-     * - authorization_code
      * - apple_user_id
-     * - email (disponible principalement lors de la première connexion)
+     * - email
      * - first_name
      * - last_name
      */
@@ -29,93 +28,52 @@ class AppleAuthController extends Controller
     {
         /*
         |--------------------------------------------------------------------------
-        | 1. Validation de la requête
+        | 1. Validation
         |--------------------------------------------------------------------------
         */
 
         $data = $request->validate([
-            'identity_token' => ['required','string'],
-            'authorization_code' => ['required','string',],
-            'apple_user_id' => ['required','string','max:255'],
+            'identity_token' => ['required', 'string'],
+            'apple_user_id' => ['required', 'string', 'max:255'],
+
             /*
-             * Apple peut retourner null après la première connexion.
+             * Apple peut ne plus envoyer ces informations
+             * lors des connexions suivantes.
              */
-            'email' => ['nullable','email','max:255'],
-            'first_name' => ['nullable','string','max:100'],
-            'last_name' => ['nullable','string','max:100']
+            'email' => ['nullable', 'email', 'max:255'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['nullable', 'string', 'max:100'],
         ]);
 
         try {
 
             /*
             |--------------------------------------------------------------------------
-            | 2. Valider l'authorization code auprès d'Apple
+            | 2. Décoder l'identity token
             |--------------------------------------------------------------------------
-            |
-            | Apple recommande de transmettre le code d'autorisation
-            | au serveur afin de le valider auprès de :
-            |
-            | https://appleid.apple.com/auth/token
-            |
             */
 
-            $appleTokenResponse = $this->validateAuthorizationCode(
-                $data['authorization_code']
+            $claims = $this->decodeIdentityToken(
+                $data['identity_token']
             );
-
-            if (!$appleTokenResponse) {
-                return response()->json([
-                    'success' => false,
-                    'code' => 'apple_authorization_invalid',
-                    'message' => 'L’autorisation Apple est invalide ou expirée.',
-                ], 422);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 3. Récupération de l'identity token retourné par Apple
-            |--------------------------------------------------------------------------
-            |
-            | Apple retourne un nouvel id_token lors de la validation
-            | de l'authorization code.
-            |
-            */
-
-            $appleIdentityToken = $appleTokenResponse['id_token'] ?? null;
-
-            if (!$appleIdentityToken) {
-                return response()->json([
-                    'success' => false,
-                    'code' => 'apple_identity_token_missing',
-                    'message' => 'Apple n’a pas retourné de token d’identité.',
-                ], 422);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 4. Décodage et validation des claims du token
-            |--------------------------------------------------------------------------
-            */
-
-            $claims = $this->decodeIdentityToken($appleIdentityToken);
 
             if (!$claims) {
                 return response()->json([
                     'success' => false,
                     'code' => 'apple_identity_token_invalid',
-                    'message' => 'Le token d’identité Apple est invalide.',
+                    'message' => 'Le token Apple est invalide.',
                 ], 422);
             }
 
             /*
             |--------------------------------------------------------------------------
-            | 5. Vérification de l'identité Apple
+            | 3. Vérifier l'identifiant Apple
             |--------------------------------------------------------------------------
             */
 
-            $tokenAppleUserId = $claims['sub'] ?? null;
+            $appleUserId = $claims['sub'] ?? null;
 
-            if (!$tokenAppleUserId) {
+            if (!$appleUserId) {
                 return response()->json([
                     'success' => false,
                     'code' => 'apple_user_id_missing',
@@ -124,36 +82,41 @@ class AppleAuthController extends Controller
             }
 
             /*
-             * L'identifiant fourni par le mobile doit correspondre
-             * au "sub" du token signé par Apple.
+             * L'identifiant envoyé par le mobile doit
+             * correspondre à celui présent dans le JWT.
              */
-            if ($tokenAppleUserId !== $data['apple_user_id']) {
+            if ($appleUserId !== $data['apple_user_id']) {
+
                 Log::warning('Apple user ID mismatch', [
                     'request_user_id' => $data['apple_user_id'],
-                    'token_user_id' => $tokenAppleUserId,
+                    'token_user_id' => $appleUserId,
                 ]);
 
                 return response()->json([
                     'success' => false,
                     'code' => 'apple_user_mismatch',
-                    'message' => 'L’identité Apple ne correspond pas aux informations reçues.',
+                    'message' => 'L’identité Apple ne correspond pas.',
                 ], 422);
             }
 
             /*
             |--------------------------------------------------------------------------
-            | 6. Vérification de l'audience
+            | 4. Vérifier l'audience
             |--------------------------------------------------------------------------
             */
 
-            $expectedClientId = config('services.apple.client_id');
+            $clientId = config('services.apple.client_id');
 
-            if (
-                !$expectedClientId ||
-                ($claims['aud'] ?? null) !== $expectedClientId
-            ) {
+            if (!$clientId) {
+                throw new \RuntimeException(
+                    'Apple client_id is not configured.'
+                );
+            }
+
+            if (($claims['aud'] ?? null) !== $clientId) {
+
                 Log::warning('Apple audience mismatch', [
-                    'expected' => $expectedClientId,
+                    'expected' => $clientId,
                     'received' => $claims['aud'] ?? null,
                 ]);
 
@@ -166,7 +129,7 @@ class AppleAuthController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | 7. Vérification de l'émetteur
+            | 5. Vérifier l'émetteur
             |--------------------------------------------------------------------------
             */
 
@@ -183,7 +146,7 @@ class AppleAuthController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | 8. Vérification de l'expiration
+            | 6. Vérifier l'expiration
             |--------------------------------------------------------------------------
             */
 
@@ -200,14 +163,13 @@ class AppleAuthController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | 9. Email
+            | 7. Email
             |--------------------------------------------------------------------------
             |
-            | L'email peut être absent du credential mobile lors
-            | des connexions suivantes.
+            | Apple peut mettre l'email dans le JWT.
             |
-            | Apple fournit cependant normalement l'email dans
-            | l'identity token.
+            | On utilise d'abord celui du JWT puis celui envoyé
+            | par le mobile.
             |
             */
 
@@ -221,28 +183,20 @@ class AppleAuthController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | 10. Recherche du compte par Apple ID
+            | 8. Recherche du compte par Apple ID
             |--------------------------------------------------------------------------
-            |
-            | IMPORTANT :
-            |
-            | apple_user_id est notre identifiant principal.
-            |
             */
 
             $user = User::query()
-                ->where('apple_id', $tokenAppleUserId)
+                ->where('apple_id', $appleUserId)
                 ->first();
 
             /*
             |--------------------------------------------------------------------------
-            | 11. Si aucun compte trouvé par Apple ID
+            | 9. Recherche éventuelle par email
             |--------------------------------------------------------------------------
             |
-            | On peut également tenter de retrouver un compte existant
-            | par email.
-            |
-            | Cela permet de connecter Apple à un compte Pop The Ballon
+            | Permet de connecter Apple à un compte Pop The Ballon
             | qui existe déjà avec la même adresse email.
             |
             */
@@ -258,7 +212,7 @@ class AppleAuthController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | 12. Compte existant
+            | 10. COMPTE EXISTANT
             |--------------------------------------------------------------------------
             */
 
@@ -279,7 +233,7 @@ class AppleAuthController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | Compte staff
+                | Staff
                 |--------------------------------------------------------------------------
                 */
 
@@ -292,27 +246,18 @@ class AppleAuthController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | Association Apple
+                | Associer Apple au compte
                 |--------------------------------------------------------------------------
-                |
-                | Si l'utilisateur possédait déjà un compte avec cet email,
-                | on associe maintenant son Apple ID.
-                |
                 */
 
                 if (!$user->apple_id) {
-                    $user->apple_id = $tokenAppleUserId;
+                    $user->apple_id = $appleUserId;
                 }
 
                 /*
                 |--------------------------------------------------------------------------
-                | Mise à jour des informations disponibles
+                | Compléter les informations si elles sont absentes
                 |--------------------------------------------------------------------------
-                |
-                | Apple ne renvoie pas toujours le nom après la première
-                | connexion. On ne remplace donc jamais une valeur existante
-                | par null.
-                |
                 */
 
                 if (!$user->first_name && !empty($data['first_name'])) {
@@ -328,11 +273,12 @@ class AppleAuthController extends Controller
                 }
 
                 $user->last_seen_at = now();
+
                 $user->save();
 
                 /*
                 |--------------------------------------------------------------------------
-                | Connexion finale
+                | Connexion
                 |--------------------------------------------------------------------------
                 */
 
@@ -343,31 +289,25 @@ class AppleAuthController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | 13. Aucun compte correspondant
+            | 11. NOUVEL UTILISATEUR
             |--------------------------------------------------------------------------
-            |
-            | Il faut maintenant terminer l'inscription dans le mobile.
-            |
             */
 
             $registrationToken = $this->createRegistrationToken([
                 'type' => 'apple_registration',
-                'apple_id' => $tokenAppleUserId,
+
+                'apple_id' => $appleUserId,
+
                 'email' => $email,
+
                 'first_name' => $data['first_name'] ?? '',
+
                 'last_name' => $data['last_name'] ?? '',
-                /*
-                 * On conserve le refresh token afin de pouvoir gérer
-                 * correctement le cycle de vie de Sign in with Apple.
-                 */
-                'refresh_token' => $appleTokenResponse['refresh_token'] ?? null,
             ]);
 
             return response()->json([
                 'success' => true,
-
                 'next' => 'complete_profile',
-
                 'apple' => [
                     'email' => $email,
                     'first_name' => $data['first_name'] ?? '',
@@ -377,6 +317,7 @@ class AppleAuthController extends Controller
                 'registration_token' => $registrationToken,
             ]);
         } catch (\Throwable $e) {
+
             Log::error('Apple authentication error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -392,46 +333,14 @@ class AppleAuthController extends Controller
 
 
     /**
-     * Valide l'authorization code auprès d'Apple.
-     *
-     * Apple utilise :
-     *
-     * POST https://appleid.apple.com/auth/token
-     */
-    private function validateAuthorizationCode(string $authorizationCode): ?array {
-
-        $response = Http::asForm()
-            ->timeout(15)
-            ->post('https://appleid.apple.com/auth/token',
-                [
-                    'client_id' => config('services.apple.client_id'),
-                    'client_secret' => $this->generateClientSecret(),
-                    'code' => $authorizationCode,
-                    'grant_type' => 'authorization_code',
-                ]
-            );
-
-        if (!$response->successful()) {
-            Log::warning('Apple token validation failed', [
-                'status' => $response->status(),
-                'response' => $response->json(),
-            ]);
-            return null;
-        }
-
-        return $response->json();
-    }
-
-
-    /**
-     * Décode l'identity token Apple.
+     * Décode le payload du JWT Apple.
      *
      * IMPORTANT :
-     * Cette méthode sera remplacée par une vraie vérification
-     * cryptographique de la signature Apple.
+     * Cette méthode décode le JWT mais ne vérifie pas encore
+     * cryptographiquement sa signature.
      */
-    private function decodeIdentityToken(string $identityToken): ?array {
-
+    private function decodeIdentityToken(string $identityToken): ?array
+    {
         $parts = explode('.', $identityToken);
 
         if (count($parts) !== 3) {
@@ -453,45 +362,33 @@ class AppleAuthController extends Controller
             )
         );
 
-        if (!$decoded) {
+        if ($decoded === false) {
             return null;
         }
 
-        $data = json_decode($decoded,true);
-        return is_array($data) ? $data: null;
-    }
-
-
-    /**
-     * Génère le client secret Apple.
-     */
-    private function generateClientSecret(): string
-    {
-        /*
-         * À implémenter avec :
-         *
-         * - Apple Team ID
-         * - Apple Key ID
-         * - Apple private key
-         * - Apple client ID
-         *
-         * Nous allons le faire dans l'étape suivante.
-         */
-
-        throw new \RuntimeException(
-            'Apple client secret generation is not configured yet.'
+        $data = json_decode(
+            $decoded,
+            true
         );
+
+        return is_array($data)
+            ? $data
+            : null;
     }
 
 
     /**
-     * Génère un token temporaire pour terminer l'inscription.
+     * Génère un token temporaire pour terminer
+     * l'inscription Apple.
      */
-    private function createRegistrationToken(array $payload, int $minutes = 30): string {
+    private function createRegistrationToken(
+        array $payload,
+        int $minutes = 30
+    ): string {
 
         $token = Str::random(64);
 
-        cache()->put(
+        Cache::put(
             'apple_registration:' . hash(
                 'sha256',
                 $token
@@ -502,5 +399,4 @@ class AppleAuthController extends Controller
 
         return $token;
     }
-
 }
