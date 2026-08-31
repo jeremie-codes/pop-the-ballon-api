@@ -35,6 +35,8 @@ Route::prefix('auth')->group(function () {
     Route::post('google/complete', [GoogleAuthController::class, 'completeRegistration']);
 
     Route::post('apple',[AppleAuthController::class, 'authenticate']);
+    Route::post('apple/complete',[AppleAuthController::class, 'completeRegistration']);
+
 });
 
 Route::prefix('otp')->group(function () {
