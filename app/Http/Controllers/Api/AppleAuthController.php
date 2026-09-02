@@ -451,7 +451,7 @@ class AppleAuthController extends Controller
         */
 
         $username = Str::lower(
-            trim($data[''])
+            trim($data['username'])
         );
 
         $phone = !empty($data['phone'])
