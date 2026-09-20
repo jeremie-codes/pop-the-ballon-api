@@ -20,7 +20,8 @@ class PopChoiceService
     /**
      * Minimum delay between two automatic Pop Choices.
      */
-    private const COOLDOWN_HOURS = 2;
+    //private const COOLDOWN_HOURS = 2;
+    private const COOLDOWN_HOURS = 0;
 
     /**
      * Maximum number of questions in a voluntary session.
