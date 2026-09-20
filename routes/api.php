@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PopChoiceController;
+use App\Http\Controllers\Api\PopChoiceCompatibilityController;
 use App\Http\Controllers\Api\VerificationPaymentController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -205,6 +206,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /* Automatic Pop Choices */
     Route::get('/pop-choices/next', [PopChoiceController::class, 'next']);
+
+    /* Compatibility estimate for confirmed matches */
+    Route::get('/matches/{match}/compatibility', [PopChoiceCompatibilityController::class, 'show']);
 
     /* Voluntary sessions */
     Route::post('/pop-choices/sessions', [PopChoiceController::class, 'startSession']);
